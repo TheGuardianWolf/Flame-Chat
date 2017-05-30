@@ -7,23 +7,23 @@ class Server(object):
         self.mapper = cherrypy.dispatch.MethodDispatcher()
 
         self.appConfig = {
-            "/": {
-                "request.dispatch": self.mapper,
-                "tools.sessions.on": True,
-                "tools.staticdir.on": True,
-                "tools.staticdir.dir": globals.webRoot,
-                "tools.staticdir.index": "index.html"
+            '/': {
+                'request.dispatch': self.mapper,
+                'tools.sessions.on': True,
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': globals.webRoot,
+                'tools.staticdir.index': 'index.html'
             }
         }
 
     def route(self):
-        cherrypy.tree.mount(None, "/", config=self.appConfig)
+        cherrypy.tree.mount(None, '/', config=self.appConfig)
 
     # a blocking call that starts the web application listening for requests
     def start(self, port=8080):
         self.route()
-        cherrypy.config.update({"server.socket_host": "0.0.0.0", })
-        cherrypy.config.update({"server.socket_port": port, })
+        cherrypy.config.update({'server.socket_host': '0.0.0.0', })
+        cherrypy.config.update({'server.socket_port': port, })
         cherrypy.engine.signals.subscribe()
         cherrypy.engine.start()
         cherrypy.engine.block()
@@ -39,5 +39,5 @@ def main():
     server.start()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
