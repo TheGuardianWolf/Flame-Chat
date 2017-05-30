@@ -1,17 +1,17 @@
 import cherrypy
-import globals
+import Globals
 
 
 class Server(object):
     def __init__(self):
         self.mapper = cherrypy.dispatch.MethodDispatcher()
-
+        
         self.appConfig = {
             '/': {
                 'request.dispatch': self.mapper,
                 'tools.sessions.on': True,
                 'tools.staticdir.on': True,
-                'tools.staticdir.dir': globals.webRoot,
+                'tools.staticdir.dir': Globals.webRoot,
                 'tools.staticdir.index': 'index.html'
             }
         }
@@ -32,9 +32,7 @@ class Server(object):
     def stop(self):
         cherrypy.engine.stop()
 
-
 def main():
-    # my code here
     server = Server()
     server.start()
 
