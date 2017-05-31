@@ -5,8 +5,6 @@ from app.Models.UserModel import User
 from app.Models.AuthModel import Auth
 
 class DatabaseService():
-    dbPath = os.path.join(Globals.appRoot, 'data', 'entity.db')
-
     def __init__(self):
         self.__checkDB__()
 

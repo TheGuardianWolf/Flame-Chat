@@ -1,6 +1,6 @@
 import cherrypy
 import Globals
-from Services.DatabaseService import DatabaseService
+from app.Services.DatabaseService import DatabaseService
 
 class Server(object):
     def __init__(self):
