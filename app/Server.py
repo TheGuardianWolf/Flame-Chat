@@ -1,6 +1,6 @@
 import cherrypy
 import Globals
-
+from Services.DatabaseService import DatabaseService
 
 class Server(object):
     def __init__(self):
@@ -33,6 +33,7 @@ class Server(object):
         cherrypy.engine.stop()
 
 def main():
+    dbService = DatabaseService()
     server = Server()
     server.start()
 

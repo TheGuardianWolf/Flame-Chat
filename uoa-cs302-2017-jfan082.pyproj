@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{3c68d2c5-589f-4823-9096-653e34a0d601}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>src\Server.py</StartupFile>
+    <StartupFile>app\Server.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -19,25 +19,31 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="src\controllers\AuthController.py" />
-    <Compile Include="src\Globals.py" />
-    <Compile Include="src\models\AuthModel.py" />
-    <Compile Include="src\models\UserModel.py" />
-    <Compile Include="src\Server.py" />
-    <Compile Include="src\services\DatabaseService.py" />
-    <Compile Include="src\services\LoginService.py" />
-    <Compile Include="src\services\__init__.py" />
-    <Compile Include="src\__init__.py" />
+    <Compile Include="app\Controllers\AuthController.py" />
+    <Compile Include="app\Data\Initialiser.py" />
+    <Compile Include="app\Data\__init__.py" />
+    <Compile Include="app\Globals.py" />
+    <Compile Include="app\Models\AuthModel.py" />
+    <Compile Include="app\Models\UserModel.py" />
+    <Compile Include="app\Models\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="app\Server.py" />
+    <Compile Include="app\Services\DatabaseService.py" />
+    <Compile Include="app\Services\LoginService.py" />
+    <Compile Include="app\Services\__init__.py" />
+    <Compile Include="app\__init__.py" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="src\wwwroot\index.html" />
+    <Content Include="app\wwwroot\index.html" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="src" />
-    <Folder Include="src\controllers" />
-    <Folder Include="src\models" />
-    <Folder Include="src\services" />
-    <Folder Include="src\wwwroot" />
+    <Folder Include="app" />
+    <Folder Include="app\Controllers\" />
+    <Folder Include="app\Data\" />
+    <Folder Include="app\Models\" />
+    <Folder Include="app\Services\" />
+    <Folder Include="app\wwwroot" />
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="Global|PythonCore|2.7" />
