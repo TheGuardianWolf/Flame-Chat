@@ -9,9 +9,9 @@ class DatabaseService():
         self.__checkDB()
 
     def __checkDB(self):
-        if not os.path.isfile(DatabaseService.dbPath):
-            print 'Creating new database at ' + DatabaseService.dbPath
-            connection = sqlite3.connect(DatabaseService.dbPath)
+        if not os.path.isfile(Globals.dbPath):
+            print 'Creating new database at ' + Globals.dbPath
+            connection = sqlite3.connect(Globals.dbPath)
             db = connection.cursor()
             models = [User, Auth]
             for model in models:
@@ -28,4 +28,4 @@ class DatabaseService():
             connection.commit()
             connection.close()
         else:
-            print 'Using database found at ' + DatabaseService.dbPath
+            print 'Using database found at ' + Globals.dbPath

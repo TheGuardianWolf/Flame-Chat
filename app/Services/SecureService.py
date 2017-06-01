@@ -1,5 +1,6 @@
 import Globals
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import AES
 from Crypto import Random
 import binascii
 
@@ -30,12 +31,12 @@ class SecureService():
             self.publicKey = self.privateKey.publickey()
 
             publicFile = open(Globals.publicKeyPath, 'w')
-            publicFile.write(self.publicKey.exportKey("PEM") )
+            publicFile.write(self.publicKey.exportKey('PEM') )
             publicFile.close()
             print 'Created new private key at ' + Globals.privateKeyPath
 
             privateFile = open(Globals.privateKeyPath, 'w')
-            privateFile.write(self.privateKey.exportKey("PEM"))
+            privateFile.write(self.privateKey.exportKey('PEM'))
             privateFile.close()
             print 'Created new public key at ' + Globals.publicKeyPath
 

@@ -21,6 +21,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app\Controllers\AuthController.py" />
+    <Compile Include="app\Controllers\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Globals.py" />
     <Compile Include="app\Models\AuthModel.py" />
     <Compile Include="app\Models\MessageModel.py">
@@ -30,8 +33,20 @@
     <Compile Include="app\Models\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="app\Routers\LocalRouter.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="app\Routers\RemoteRouter.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="app\Routers\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Server.py" />
     <Compile Include="app\Services\DatabaseService.py" />
+    <Compile Include="app\Services\RestfulService.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Services\SecureService.py">
       <SubType>Code</SubType>
     </Compile>
@@ -46,6 +61,7 @@
     <Folder Include="app" />
     <Folder Include="app\Controllers\" />
     <Folder Include="app\Models\" />
+    <Folder Include="app\Routers\" />
     <Folder Include="app\Services\" />
     <Folder Include="app\wwwroot" />
   </ItemGroup>
