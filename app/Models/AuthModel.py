@@ -6,6 +6,7 @@ class Auth():
         ('passhash', 'text')
     ]
 
-    def __init__(self, username, passhash):
+    def __init__(self, id, username, passhash):
+        self.id = id
         self.username = username
         self.passhash = passhash

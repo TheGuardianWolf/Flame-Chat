@@ -6,12 +6,13 @@
     <ProjectGuid>{3c68d2c5-589f-4823-9096-653e34a0d601}</ProjectGuid>
     <ProjectHome />
     <StartupFile>app\Server.py</StartupFile>
-    <SearchPath />
+    <SearchPath>app</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <InterpreterId>Global|PythonCore|2.7</InterpreterId>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
@@ -20,16 +21,20 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app\Controllers\AuthController.py" />
-    <Compile Include="app\Data\Initialiser.py" />
-    <Compile Include="app\Data\__init__.py" />
     <Compile Include="app\Globals.py" />
     <Compile Include="app\Models\AuthModel.py" />
+    <Compile Include="app\Models\MessageModel.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Models\UserModel.py" />
     <Compile Include="app\Models\__init__.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="app\Server.py" />
     <Compile Include="app\Services\DatabaseService.py" />
+    <Compile Include="app\Services\SecureService.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Services\LoginService.py" />
     <Compile Include="app\Services\__init__.py" />
     <Compile Include="app\__init__.py" />
@@ -40,7 +45,6 @@
   <ItemGroup>
     <Folder Include="app" />
     <Folder Include="app\Controllers\" />
-    <Folder Include="app\Data\" />
     <Folder Include="app\Models\" />
     <Folder Include="app\Services\" />
     <Folder Include="app\wwwroot" />

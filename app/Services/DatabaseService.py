@@ -6,9 +6,9 @@ from app.Models.AuthModel import Auth
 
 class DatabaseService():
     def __init__(self):
-        self.__checkDB__()
+        self.__checkDB()
 
-    def __checkDB__(self):
+    def __checkDB(self):
         if not os.path.isfile(DatabaseService.dbPath):
             print 'Creating new database at ' + DatabaseService.dbPath
             connection = sqlite3.connect(DatabaseService.dbPath)
@@ -23,6 +23,7 @@ class DatabaseService():
                         args.append(' '.join(item))
                     db.execute(' '.join([command, table, '(' + ', '.join(args) + ')']))
                 except AttributeError:
+                    print "Warning: " + str(model) + " does not have an associated table in the database."
                     continue
             connection.commit()
             connection.close()

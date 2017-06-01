@@ -1,12 +1,13 @@
 import Globals
 from Crypto.PublicKey import RSA
+from Crypto import Random
+import binascii
 
 class SecureService():
     def __init__(self):
-        self.__loadPeerKeys__()
-        self.__loadServerKeys__()
+        self.__loadPeerKeys()
 
-    def __loadPeerKeys__(self):
+    def __loadPeerKeys(self):
         try:
             privateFile = open(Globals.privateKeyPath, 'r')
             self.privateKey = RSA.importKey(privateFile.read())
@@ -38,5 +39,14 @@ class SecureService():
             privateFile.close()
             print 'Created new public key at ' + Globals.publicKeyPath
 
-    def __loadServerKeys__(self):
-        self.serverKey = AES.new(Globals.serverKey, AES.MODE_CBC, binascii.unhexlify(enc)[:16])
+    def serverEncrypt(self, raw):
+        raw += Globals.serverAESPadding * (Globals.serverAESBlockSize - (len(raw) % Globals.serverAESBlockSize))
+        iv = Random.new().read(16)
+        cipher = AES.new(Globals.serverKey, AES.MODE_CBC, iv)
+        return binascii.hexlify(iv + cipher.encrypt(raw))
+    
+    def serverDecrypt(self, enc):
+        enc = binascii.unhexlify(enc)
+        iv = enc[:16]
+        cipher = AES.new(Globals.serverAESPadding, AES.MODE_CBC, iv)
+        return cipher.decrypt(enc[16:]).rstrip(Globals.serverAESPadding)

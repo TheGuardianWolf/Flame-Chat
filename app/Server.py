@@ -1,6 +1,8 @@
 import cherrypy
 import Globals
 from app.Services.DatabaseService import DatabaseService
+from app.Services.LoginService import LoginService
+from app.Services.SecureService import SecureService
 
 class Server(object):
     def __init__(self):
@@ -16,14 +18,25 @@ class Server(object):
             }
         }
 
-    def route(self):
+        self.services = {
+            'DatabaseService': DatabaseService(),
+            'LoginService': LoginService(),
+            'SecureService': SecureService()
+        }
+
+        self.controllers = {
+        }
+
+    def mountTree(self):
         cherrypy.tree.mount(None, '/', config=self.appConfig)
 
     # a blocking call that starts the web application listening for requests
     def start(self, port=8080):
-        self.route()
-        cherrypy.config.update({'server.socket_host': '0.0.0.0', })
-        cherrypy.config.update({'server.socket_port': port, })
+        self.mountTree()
+        cherrypy.config.update({
+            'server.socket_host': '0.0.0.0', 
+            'server.socket_port': port
+        })
         cherrypy.engine.signals.subscribe()
         cherrypy.engine.start()
         cherrypy.engine.block()
@@ -33,7 +46,6 @@ class Server(object):
         cherrypy.engine.stop()
 
 def main():
-    dbService = DatabaseService()
     server = Server()
     server.start()
 
