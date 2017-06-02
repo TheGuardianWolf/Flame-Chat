@@ -57,7 +57,7 @@ class AuthController(object):
 
     def __dynamicAuth(self, username, passhash, enc=1):
         if (self.LS.loginServerStatus()):
-            (errorcode, errorMessage) = self.__loginServerAuth(username, passhash)
+            (errorCode, errorMessage) = self.__loginServerAuth(username, passhash)
 
             if errorCode == 0:
                 cherrypy.session['authenticated'] = True

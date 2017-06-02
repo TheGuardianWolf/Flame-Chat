@@ -1,8 +1,9 @@
 import sqlite3
 import os
-import Globals
+from app import Globals
 from app.Models.UserModel import User
 from app.Models.AuthModel import Auth
+from app.Models.MessageModel import Message
 
 class DatabaseService(object):
     def __init__(self, dbPath):
@@ -11,7 +12,7 @@ class DatabaseService(object):
 
     def __checkDB(self):
         if not os.path.isfile(self.dbPath):
-            models = [User, Auth]
+            models = [User, Auth, Message]
             queries =  []
             command = 'CREATE TABLE IF NOT EXISTS'
             for model in models:
@@ -25,21 +26,23 @@ class DatabaseService(object):
                     print "Warning: " + str(model) + " does not have an associated table in the database."
                     continue
                 queries.append(' '.join([command, table, self.__bracketJoin(',', values)]))
-            self.query(queries)
+            self.queryMany(queries)
             print 'Created new database at ' + self.dbPath
         else:
             print 'Using database found at ' + self.dbPath
 
     def __queryFormatItem(self, item):
         if item is None:
-            items[index] = 'NULL'
+            return 'NULL'
+        elif isinstance(item, str):
+            return '\'' + item + '\''
         else:
-            items[index] = str(items[index])
+            return str(item)
 
     def __bracketJoin(self, joint, list):
         return '(' + joint.join(list) + ')'
 
-    def query(self, queries, fetch=False):
+    def queryMany(self, queries, fetch=False):
         connection = sqlite3.connect(self.dbPath)
         db = connection.cursor()
         returnVals = []
@@ -55,10 +58,16 @@ class DatabaseService(object):
         connection.close()
         return returnVals
 
+    def query(self, query, fetch=False):
+        try:
+            return self.queryMany([query], fetch)[0]
+        except IndexError:
+            return None
+
     def insertMany(self, modelList):
         command = 'INSERT INTO'
         queries = []
-        for model in modelList:
+        for i, model in enumerate(modelList):
             entryNames = []
             entryValues = []
             for entry in model.tableSchema:
@@ -73,9 +82,7 @@ class DatabaseService(object):
                     self.__bracketJoin(',', entryValues)
                 ]
             ))
-            
-
-        return self.query(queries)
+        return self.queryMany(queries)
 
     def insert(self, model):
         try:
@@ -96,7 +103,7 @@ class DatabaseService(object):
                     queryParts.append(condition)
             queries.append(' '.join(queryParts))
 
-        fetched = self.query(queries, fetch=True)
+        fetched = self.queryMany(queries, fetch=True)
         newModelsList = []
 
         for i, entries in enumerate(fetched):
@@ -124,7 +131,7 @@ class DatabaseService(object):
                 queryParts = [command, model.tableName, 'WHERE', condition]
                 queries.append(' '.join(queryParts))
 
-        return self.query(queries)
+        return self.queryMany(queries)
 
     def delete(self, model, condition):
         try:
@@ -148,7 +155,7 @@ class DatabaseService(object):
                 queryParts.append(condition)
                 queries.append(' '.join(queryParts))
 
-        return self.query(queries)
+        return self.queryMany(queries)
 
     def update(self, model, condition):
         try:

@@ -1,5 +1,5 @@
 import cherrypy
-import Globals
+from app import Globals
 from app.Services.DatabaseService import DatabaseService
 from app.Services.LoginService import LoginService
 from app.Services.SecureService import SecureService

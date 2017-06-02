@@ -14,7 +14,7 @@ class LoginService(object):
         s.close()
         return internalIP
 
-    def loginServerStatus():
+    def loginServerStatus(self):
         return True
 
     def getLocation(self):

@@ -33,6 +33,9 @@
     <Compile Include="app\Models\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="app\Models\__Model.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Routers\LocalRouter.py">
       <SubType>Code</SubType>
     </Compile>
@@ -53,6 +56,9 @@
     <Compile Include="app\Services\LoginService.py" />
     <Compile Include="app\Services\__init__.py" />
     <Compile Include="app\__init__.py" />
+    <Compile Include="tests\Services\test_DatabaseService.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Content Include="app\wwwroot\index.html" />
@@ -64,6 +70,8 @@
     <Folder Include="app\Routers\" />
     <Folder Include="app\Services\" />
     <Folder Include="app\wwwroot" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\Services\" />
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="Global|PythonCore|2.7" />

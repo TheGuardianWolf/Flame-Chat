@@ -1,4 +1,4 @@
-import Globals
+from app import Globals
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto import Random

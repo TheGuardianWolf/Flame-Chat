@@ -1,5 +1,5 @@
 import cherrypy
-import Globals
+from app import Globals
 
 class RemoteRouter(object):
     def __init__(self, services):

@@ -1,4 +1,4 @@
-import Globals
+from app import Globals
 from urllib import urlencode
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import HTTPException
