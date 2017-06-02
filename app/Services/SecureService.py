@@ -4,7 +4,7 @@ from Crypto.Cipher import AES
 from Crypto import Random
 from binascii import hexlify, unhexlify
 
-class SecureService():
+class SecureService(object):
     def __init__(self):
         self.__loadPeerKeys()
 

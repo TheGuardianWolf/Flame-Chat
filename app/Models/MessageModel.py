@@ -1,4 +1,4 @@
-class Message():
+class Message(object):
     tableName = 'messages'
     tableSchema = [
         ('id', 'integer primary key'),

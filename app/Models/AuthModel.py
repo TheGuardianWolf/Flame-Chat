@@ -1,4 +1,4 @@
-class Auth():
+class Auth(object):
     tableName = 'auth'
     tableSchema = [
         ('id', 'integer primary key'),

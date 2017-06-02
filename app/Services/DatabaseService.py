@@ -4,7 +4,7 @@ import Globals
 from app.Models.UserModel import User
 from app.Models.AuthModel import Auth
 
-class DatabaseService():
+class DatabaseService(object):
     def __init__(self, dbPath):
         self.dbPath = dbPath
         self.__checkDB()
@@ -17,9 +17,10 @@ class DatabaseService():
             for model in models:
                 args = []
                 try:
-                    table = model.tableName
-                    for item in model.tableSchema:
-                        args.append(' '.join(item))
+                    if model.tableName is not None:
+                        table = model.tableName
+                        for item in model.tableSchema:
+                            args.append(' '.join(item))
                 except AttributeError:
                     print "Warning: " + str(model) + " does not have an associated table in the database."
                     continue
@@ -66,17 +67,13 @@ class DatabaseService():
     def insert(self, model):
         return self.insertMany([model])[0]
 
-    def selectMany(self, modelList, attributesList='*', conditionList=None):
+    def selectMany(self, modelList, conditionList=None):
         command = 'SELECT'
         queries = []
 
         for i in range(0, len(modelList)):
             model = modelList[i]
-            if attributesList == '*':
-                attrubute = '*'
-            else:
-                attribute = attributeList[i]
-            queryList = [command, ','.join(attributes), 'FROM', model.tableName]
+            queryList = [command, '*', 'FROM', model.tableName]
             if condtionList is not None and condition is not None:
                 queryList.append('WHERE')
                 queryList.append(conditionList[i])
@@ -86,6 +83,7 @@ class DatabaseService():
 
         for i in range(0, len(fetched)):
             model = modelList[i]
+            entries = fetched[i]
             for j in range(0, len(entries)):
-                entry = entries[i]
+                entries[j] = model(*entries[j])
 

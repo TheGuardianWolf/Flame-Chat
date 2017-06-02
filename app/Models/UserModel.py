@@ -1,4 +1,4 @@
-class User():
+class User(object):
     tableName = 'users'
     tableSchema = [
         ('id', 'integer primary key'),
