@@ -14,7 +14,7 @@ class LoginService(object):
         s.close()
         return internalIP
 
-    def __loginServerStatus():
+    def loginServerStatus():
         return True
 
     def getLocation(self):
@@ -30,7 +30,7 @@ class LoginService(object):
             if (currIntIPArr[0], currIntIPArr[1]) == (desktopIntIPArr[0], desktopIntIPArr[1]):
                 return (0, currIntIP)
             elif (currIntIPArr[0], currIntIPArr[1]) == (wifiIntIPArr[0], wifiIntIPArr[1]):
-                return (1, currIntIP)
+                return (1, extIP)
 
         return (2, extIP)
 

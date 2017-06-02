@@ -15,22 +15,31 @@ class DatabaseService(object):
             queries =  []
             command = 'CREATE TABLE IF NOT EXISTS'
             for model in models:
-                args = []
+                values = []
                 try:
                     if model.tableName is not None:
                         table = model.tableName
                         for item in model.tableSchema:
-                            args.append(' '.join(item))
+                            values.append(' '.join(item))
                 except AttributeError:
                     print "Warning: " + str(model) + " does not have an associated table in the database."
                     continue
-                queries.append(' '.join([command, table, '(' + ', '.join(args) + ')']))
-            self.__query(queries)
+                queries.append(' '.join([command, table, self.__bracketJoin(',', values)]))
+            self.query(queries)
             print 'Created new database at ' + self.dbPath
         else:
             print 'Using database found at ' + self.dbPath
 
-    def __query(self, queries, fetch=False):
+    def __queryFormatItem(self, item):
+        if item is None:
+            items[index] = 'NULL'
+        else:
+            items[index] = str(items[index])
+
+    def __bracketJoin(self, joint, list):
+        return '(' + joint.join(list) + ')'
+
+    def query(self, queries, fetch=False):
         connection = sqlite3.connect(self.dbPath)
         db = connection.cursor()
         returnVals = []
@@ -49,41 +58,100 @@ class DatabaseService(object):
     def insertMany(self, modelList):
         command = 'INSERT INTO'
         queries = []
-        entryList = []
         for model in modelList:
-            values = []
-            # Potential AttributeError here from a model with no tableSchema or tableName
-            for value in model.tableSchema:
-                values.append(getattr(model, value[0]))
-            entriesList.append((model.tableName, values))
-
-        for entry in entriesList:
+            entryNames = []
+            entryValues = []
+            for entry in model.tableSchema:
+                entryNames.append(entry[0])
+                entryValues.append(self.__queryFormatItem(getattr(model, entry[0])))
             queries.append(' '.join(
-                [command, entry[0], 'VALUES', '(' + ','.join(entry[1]) + ')']
+                [
+                    command, 
+                    modelList[i].tableName, 
+                    self.__bracketJoin(',', entryNames), 
+                    'VALUES', 
+                    self.__bracketJoin(',', entryValues)
+                ]
             ))
+            
 
-        return self.__query(queries)
+        return self.query(queries)
 
     def insert(self, model):
-        return self.insertMany([model])[0]
+        try:
+            return self.insertMany([model])[0]
+        except IndexError:
+            return None
 
     def selectMany(self, modelList, conditionList=None):
         command = 'SELECT'
         queries = []
 
-        for i in range(0, len(modelList)):
+        for i, model in enumerate(modelList):
+            queryParts = [command, '*', 'FROM', model.tableName]
+            if conditionList is not None:
+                condition = conditionList[i]
+                if condition is not None:
+                    queryParts.append('WHERE')
+                    queryParts.append(condition)
+            queries.append(' '.join(queryParts))
+
+        fetched = self.query(queries, fetch=True)
+        newModelsList = []
+
+        for i, entries in enumerate(fetched):
             model = modelList[i]
-            queryList = [command, '*', 'FROM', model.tableName]
-            if condtionList is not None and condition is not None:
-                queryList.append('WHERE')
-                queryList.append(conditionList[i])
-            queries.append(' '.join(queryList))
+            newModels = []
+            for j, entry in enumerate(entries):
+                newModels.append(model(*entries[j]))
+            newModelsList.append(newModels)
 
-        fetched = self.__query(queries, fetch=True)
+        return newModelsList
 
-        for i in range(0, len(fetched)):
-            model = modelList[i]
-            entries = fetched[i]
-            for j in range(0, len(entries)):
-                entries[j] = model(*entries[j])
+    def select(self, model, condition=None):
+        try:
+            return self.selectMany([model], [condition])[0]
+        except IndexError:
+            return None
 
+    def deleteMany(self, modelList, conditionList):
+        command = 'DELETE FROM'
+        queries = []
+
+        for i, model in enumerate(modelList):
+            condition = conditionList[i]
+            if condition is not None:
+                queryParts = [command, model.tableName, 'WHERE', condition]
+                queries.append(' '.join(queryParts))
+
+        return self.query(queries)
+
+    def delete(self, model, condition):
+        try:
+            return self.deleteMany([model], [condition])[0]
+        except IndexError:
+            return None
+
+    def updateMany(self, modelList, conditionList):
+        command = 'UPDATE'
+        queries = []
+
+        for i, model in enumerate(modelList):
+            condition = conditionList[i]
+            if condition is not None:
+                queryParts = [command, model.tableName, 'SET']
+                entries = []
+                for entry in model.tableSchema:
+                    entries.append(entry[0] + ' = ' + self.__queryFormatItem(getattr(model, entry[0])))
+                queryParts.append(','.join(entries))
+                queryParts.append('WHERE')
+                queryParts.append(condition)
+                queries.append(' '.join(queryParts))
+
+        return self.query(queries)
+
+    def update(self, model, condition):
+        try:
+            return self.updateMany([model], [condition])[0]
+        except IndexError:
+            return None
