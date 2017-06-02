@@ -1,6 +1,6 @@
 import cherrypy
 from datetime import datetime
-import Globals
+from app import Globals
 from app.Models.AuthModel import Auth
 from json import JSONDecoder, JSONEncoder
 

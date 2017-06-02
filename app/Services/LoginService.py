@@ -1,4 +1,4 @@
-import Globals
+from app import Globals
 import urllib2
 import hashlib
 import socket

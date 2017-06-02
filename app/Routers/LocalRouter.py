@@ -1,5 +1,5 @@
 import cherrypy
-import Globals
+from app import Globals
 from app.Controllers.AuthController import AuthController
 
 class LocalRouter(object):
