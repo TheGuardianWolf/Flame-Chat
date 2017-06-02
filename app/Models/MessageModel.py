@@ -1,4 +1,6 @@
-class Message(object):
+from app.Models.__Model import __Model
+
+class Message(__Model):
     tableName = 'messages'
     tableSchema = [
         ('id', 'integer primary key'),
@@ -8,9 +10,5 @@ class Message(object):
         ('text', 'text')
     ]
 
-    def __init__(self, id, timestamp, sender, recipient, text):
-        self.id = id
-        self.timestamp = timestamp
-        self.sender = sender
-        self.recipient = recipient
-        self.text = text
+    def __init__(self, *args):
+        super(Auth, self).__init__(*args)

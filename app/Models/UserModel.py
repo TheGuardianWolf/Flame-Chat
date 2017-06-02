@@ -1,3 +1,5 @@
+from app.Models.__Model import __Model
+
 class User(object):
     tableName = 'users'
     tableSchema = [
@@ -9,11 +11,5 @@ class User(object):
         ('publicKey', 'string')
     ]
 
-    def __init__(self, id, username, location, ip, port, lastLogin, publicKey):
-        self.id = id
-        self.username = username
-        self.location = location
-        self.ip = ip
-        self.port = port
-        self.lastLogin = lastLogin
-        self.publicKey = publicKey
+    def __init__(self, *args):
+        super(Auth, self).__init__(*args)

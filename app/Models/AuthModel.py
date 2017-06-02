@@ -1,4 +1,6 @@
-class Auth(object):
+from app.Models.__Model import __Model
+
+class Auth(__Model):
     tableName = 'auth'
     tableSchema = [
         ('id', 'integer primary key'),
@@ -6,7 +8,5 @@ class Auth(object):
         ('passhash', 'text')
     ]
 
-    def __init__(self, id, username, passhash):
-        self.id = id
-        self.username = username
-        self.passhash = passhash
+    def __init__(self, *args):
+        super(Auth, self).__init__(*args)
