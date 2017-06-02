@@ -2,7 +2,7 @@ import Globals
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto import Random
-import binascii
+from binascii import hexlify, unhexlify
 
 class SecureService():
     def __init__(self):
@@ -44,10 +44,10 @@ class SecureService():
         raw += Globals.serverAESPadding * (Globals.serverAESBlockSize - (len(raw) % Globals.serverAESBlockSize))
         iv = Random.new().read(16)
         cipher = AES.new(Globals.serverKey, AES.MODE_CBC, iv)
-        return binascii.hexlify(iv + cipher.encrypt(raw))
+        return hexlify(iv + cipher.encrypt(raw))
     
     def serverDecrypt(self, enc):
-        enc = binascii.unhexlify(enc)
+        enc = unhexlify(enc)
         iv = enc[:16]
         cipher = AES.new(Globals.serverAESPadding, AES.MODE_CBC, iv)
         return cipher.decrypt(enc[16:]).rstrip(Globals.serverAESPadding)

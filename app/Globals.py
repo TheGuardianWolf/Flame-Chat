@@ -9,6 +9,11 @@ loginRoot = r'http://cs302.pythonanywhere.com'
 # Values for public server
 publicPort = 8080
 
+# Values for ip location
+universityDesktop = '10.103.0.0'
+universityWifi = '172.23.0.0'
+universityExternalIP = '1.1.1.1'
+
 # Values for encryption
 privateKeyPath = os.path.join(appRoot, 'data', 'key')
 publicKeyPath = os.path.join(appRoot, 'data', 'key.pub')
