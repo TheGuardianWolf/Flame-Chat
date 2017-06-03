@@ -40,6 +40,9 @@ class SecureService(object):
             privateFile.close()
             print 'Created new public key at ' + Globals.publicKeyPath
 
+    def encryptWithKey(self, key, raw):
+        return RSA.importKey(key).encrypt(raw)
+
     def serverEncrypt(self, raw):
         raw += Globals.serverAESPadding * (Globals.serverAESBlockSize - (len(raw) % Globals.serverAESBlockSize))
         iv = Random.new().read(16)

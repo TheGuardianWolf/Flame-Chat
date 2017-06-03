@@ -24,6 +24,7 @@
     <Compile Include="app\Controllers\PublicController.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="app\Controllers\MessagesController.py" />
     <Compile Include="app\Controllers\UsersController.py">
       <SubType>Code</SubType>
     </Compile>
@@ -37,6 +38,7 @@
     <Compile Include="app\Models\MessageModel.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="app\Models\UserMetaModel.py" />
     <Compile Include="app\Models\UserModel.py" />
     <Compile Include="app\Models\__init__.py">
       <SubType>Code</SubType>

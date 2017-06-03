@@ -9,7 +9,7 @@ class Profile(__Model):
         ('position', 'text'),
         ('description', 'text'),
         ('location', 'text'),
-        ('picture', 'integer')
+        ('picture', 'text')
     ]
 
     def __init__(self, *args):

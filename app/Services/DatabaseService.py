@@ -1,9 +1,11 @@
 import os
 from sqlite3 import IntegrityError, connect
 from app import Globals
-from app.Models.UserModel import User
 from app.Models.AuthModel import Auth
 from app.Models.MessageModel import Message
+from app.Models.UserModel import User
+from app.Models.ProfileModel import Profile
+from app.Models.FileModel import File
 
 class DatabaseService(object):
     def __init__(self, dbPath):
@@ -12,7 +14,7 @@ class DatabaseService(object):
 
     def __checkDB(self):
         if not os.path.isfile(self.dbPath):
-            models = [User, Auth, Message]
+            models = [User, Auth, Message, Profile, File]
             queries =  []
             command = 'CREATE TABLE IF NOT EXISTS'
             for model in models:
@@ -37,7 +39,7 @@ class DatabaseService(object):
         elif isinstance(item, basestring):
             return '\'' + item + '\''
         else:
-            return str(item)
+            return unicode(item)
 
     def __bracketJoin(self, joint, list):
         return '(' + joint.join(list) + ')'

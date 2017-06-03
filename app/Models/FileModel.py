@@ -10,8 +10,8 @@ class File(__Model):
         ('filename', 'text'),
         ('content_type', 'text'),
         ('stamp', 'text'),
-        ('encryption', 'integer'),
-        ('hashing', 'integer'),
+        ('encryption', 'text'),
+        ('hashing', 'text'),
         ('hash', 'text'),
         ('decryptionKey', 'text')
     ]

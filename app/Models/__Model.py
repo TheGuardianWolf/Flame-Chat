@@ -29,7 +29,7 @@ class __Model(object):
             elif dbValueType.find('integer') > -1:
                 pyValue = int(value)
             else:
-                pyValue = str(value)
+                pyValue = unicode(value)
             return pyValue
 
         args = []

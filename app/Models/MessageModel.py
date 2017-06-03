@@ -8,10 +8,10 @@ class Message(__Model):
         ('destination', 'text'),
         ('message', 'text'),
         ('stamp', 'text'),
-        ('markdown', 'integer'),
-        ('encoding', 'integer'),
-        ('encryption', 'integer'),
-        ('hashing', 'integer'),
+        ('markdown', 'text'),
+        ('encoding', 'text'),
+        ('encryption', 'text'),
+        ('hashing', 'text'),
         ('hash', 'text'),
         ('decryptionKey', 'text')
     ]
