@@ -1,11 +1,15 @@
 from app import Globals
-import urllib2
+from urllib2 import urlopen, HTTPError, URLError
+from httplib import HTTPException
 import hashlib
 import socket
 
 class LoginService(object):
+    def __init__(self):
+        self.online = True
+
     def __getExternalIP(self):
-        return urllib2.urlopen('http://ip.42.pl/raw').read()
+        return urlopen('http://ip.42.pl/raw').read()
 
     def __getInternalIP(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -15,7 +19,21 @@ class LoginService(object):
         return internalIP
 
     def loginServerStatus(self):
-        return True
+        requestUrl = Globals.loginRoot + '/listAPI'
+        try:
+            urlopen(requestUrl)
+            self.online = True
+        except HTTPError, e:
+            if (e.code >= 500 or e.code < 400):
+                self.online = False
+            else:
+                self.online = True
+        except URLError, e:
+            self.online = False
+        except HTTPException, e:
+            self.online = False
+
+        return self.online
 
     def getLocation(self):
         extIP = self.__getExternalIP()

@@ -21,6 +21,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app\Controllers\AuthController.py" />
+    <Compile Include="app\Controllers\UsersController.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Controllers\__init__.py">
       <SubType>Code</SubType>
     </Compile>
@@ -47,6 +50,9 @@
     </Compile>
     <Compile Include="app\Server.py" />
     <Compile Include="app\Services\DatabaseService.py" />
+    <Compile Include="app\Services\MemoryService.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Services\RestfulService.py">
       <SubType>Code</SubType>
     </Compile>

@@ -4,9 +4,12 @@ from urllib2 import urlopen, HTTPError, URLError
 from httplib import HTTPException
 
 class RestfulService(object):
-    def get(self, url, endpoint, payload):
+    def get(self, url, endpoint, payload=None):
         try:
-            response = urlopen(url + endpoint + '?' + urlencode(payload))
+            requestUrl = url + endpoint
+            if (payload is not None):
+                requestUrl += '?' + urlencode(payload)
+            response = urlopen(requestUrl)
             return (200, response)
         except HTTPError, e:
             return (e.code, None)

@@ -31,10 +31,10 @@ class DatabaseService(object):
         else:
             print 'Using database found at ' + self.dbPath
 
-    def __queryFormatItem(self, item):
+    def queryFormat(self, item):
         if item is None:
             return 'NULL'
-        elif isinstance(item, str):
+        elif isinstance(item, basestring):
             return '\'' + item + '\''
         else:
             return str(item)
@@ -72,7 +72,7 @@ class DatabaseService(object):
             entryValues = []
             for entry in model.tableSchema:
                 entryNames.append(entry[0])
-                entryValues.append(self.__queryFormatItem(getattr(model, entry[0])))
+                entryValues.append(self.queryFormat(getattr(model, entry[0])))
             queries.append(' '.join(
                 [
                     command, 
@@ -149,7 +149,7 @@ class DatabaseService(object):
                 queryParts = [command, model.tableName, 'SET']
                 entries = []
                 for entry in model.tableSchema:
-                    entries.append(entry[0] + ' = ' + self.__queryFormatItem(getattr(model, entry[0])))
+                    entries.append(entry[0] + ' = ' + self.queryFormat(getattr(model, entry[0])))
                 queryParts.append(','.join(entries))
                 queryParts.append('WHERE')
                 queryParts.append(condition)

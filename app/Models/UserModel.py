@@ -6,9 +6,10 @@ class User(object):
         ('id', 'integer primary key'),
         ('username', 'text'),
         ('ip', 'text'),
+        ('location', 'integer'),
         ('port', 'integer'),
         ('lastLogin', 'integer'),
-        ('publicKey', 'string')
+        ('publicKey', 'text')
     ]
 
     def __init__(self, *args):

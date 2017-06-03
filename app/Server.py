@@ -4,6 +4,7 @@ from app.Services.DatabaseService import DatabaseService
 from app.Services.LoginService import LoginService
 from app.Services.SecureService import SecureService
 from app.Services.RestfulService import RestfulService
+from app.Services.MemoryService import MemoryService
 from app.Routers.LocalRouter import LocalRouter
 from app.Routers.RemoteRouter import RemoteRouter
 
@@ -29,7 +30,8 @@ class Server(object):
             'DatabaseService': DatabaseService(Globals.dbPath),
             'LoginService': LoginService(),
             'SecureService': SecureService(),
-            'RestfulService': RestfulService()
+            'RestfulService': RestfulService(),
+            'MemoryService': MemoryService()
         }
 
         self.routers = {

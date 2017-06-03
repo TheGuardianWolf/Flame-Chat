@@ -2,7 +2,6 @@ import cherrypy
 from datetime import datetime
 from app import Globals
 from app.Models.AuthModel import Auth
-from json import JSONDecoder, JSONEncoder
 
 class AuthController(object):
     def __init__(self, services):
@@ -19,8 +18,14 @@ class AuthController(object):
     def __localAuth(self, username, passhash):
         auth = self.DS.select(Auth, 'username=' + username)
         if auth is not None and auth.username == username and auth.passhash == passhash:
-            return True
-        return False
+            cherrypy.session['authenticated'] = True
+            cherrypy.session['username'] = username
+            cherrypy.session['passhash'] = passhash
+            cherrypy.session['lastReportTime'] = datetime.now()
+            return (-1, 'Locally verified.')
+        else:
+            cherrypy.session['authenticated'] = False
+            return (-2, 'Cannot locally verify.')
 
     def __loginServerAuth(self, username, passhash, enc=1):
         (location, ip) = self.LS.getLocation()
@@ -47,13 +52,13 @@ class AuthController(object):
 
             errorCode = int(errorCode)
 
-            if errorCode ==  6:
+            if errorCode ==  6 and payload['enc'] == 1:
                 (errorCode, errorMessage) = self.__loginServerAuth(username, passhash, enc=0)
                 errorCode = int(errorCode)
 
             return (errorCode, errorMessage)
         else:
-            return (-2, 'Request error ' + str(errorCode) + ': Login server authentication not available.')
+            return (-2, 'Request error ' + str(status) + ': Login server authentication not available.')
 
     def __dynamicAuth(self, username, passhash, enc=1):
         if (self.LS.loginServerStatus()):
@@ -63,17 +68,31 @@ class AuthController(object):
                 cherrypy.session['authenticated'] = True
                 cherrypy.session['username'] = username
                 cherrypy.session['passhash'] = passhash
-                cherrypy.session['lastReportTime'] = datetime.now()
-                self.DS.insert(Auth(None, username, passhash))
+                self.__storeAuth(username, passhash)
+            elif errorCode == -2:
+                (errorCode, errorMessage) = self.__localAuth(username, passhash)
+                errorMessage += ' Request to login server failed with unhandled error.'
+                return (errorCode, errorMessage)
             else:
                 cherrypy.session['authenticated'] = False
 
+            cherrypy.session['lastLoginReportTime'] = datetime.now()
             return (errorCode, errorMessage)
         else:
-            if (self.__localAuth(username, passhash)):
-                return (-1, 'Locally verified. Login server authentication not available.')
-            else:
-                return (-2, 'Login server authentication not available.')
+            (errorCode, errorMessage) = self.__localAuth(username, passhash)
+            errorMessage += ' Login server offline or unreachable.'
+            cherrypy.session['lastLoginReportTime'] = datetime.now()
+            return (errorCode, errorMessage)
+
+    def __storeAuth(self, username, passhash):
+        q = self.DS.select(Auth, 'username=' + self.DS.queryFormat(username))
+
+        if q is not None:
+            q = q[0]
+            if not q.passhash == passhash:
+                self.DS.update(Auth(q.id, q.username, passhash), 'id='+ self.DS.queryFormat(id))
+        else:
+            self.DS.insert(Auth(None, username, passhash))
 
     @cherrypy.expose
     def stream(self):
@@ -83,7 +102,7 @@ class AuthController(object):
         cherrypy.response.headers['Content-Type'] = 'text/event-stream;charset=utf-8'
         errorCode = '-1'
         
-        if (datetime.now() - cherrypy.session['lastReportTime']).seconds > 40:
+        if (datetime.now() - cherrypy.session['lastLoginReportTime']).seconds > 40:
             (errorCode, errorMessage) = self.__dynamicAuth(cherrypy.session['username'], cherrypy.session['passhash'])
 
         return str(errorCode) + errorMessage + '\n\n'
@@ -93,35 +112,3 @@ class AuthController(object):
         passhash = self.LS.hashPassword(password)
         (errorCode, errorMessage) = self.__dynamicAuth(username, passhash)
         return str(errorCode)
-
-    @cherrypy.expose
-    def userList(self, enc=1):
-        if not self.__isAuthenticated():
-            raise cherrypy.HTTPError(403, 'User not authenticated')
-
-        payload = {
-            'username': cherrypy.session['username'],
-            'password': cherrypy.session['passhash']
-        }
-
-        if enc > 0:
-            for key in payload.keys():
-                payload[key] = self.SS.serverEncrypt(str(payload[key]))
-            payload['enc'] = 1
-
-        (status, response) = self.RS.get(Globals.loginRoot, '/getList', payload)
-
-        if response is not None:
-            return response.read()
-            responseList = response.read().split('\n')
-            (errorCode, errorMessage) = responseList.pop(0)
-
-            errorCode = int(errorCode)
-
-            if errorCode ==  6:
-                (errorCode, errorMessage) = self.getUsers(enc=0)
-                errorCode = int(errorCode)
-
-            return (errorCode, errorMessage)
-        else:
-            return (-2, 'Request error ' + str(errorCode) + ': Login server authentication not available.')
