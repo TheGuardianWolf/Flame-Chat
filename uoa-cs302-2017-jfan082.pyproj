@@ -32,6 +32,8 @@
     </Compile>
     <Compile Include="app\Globals.py" />
     <Compile Include="app\Models\AuthModel.py" />
+    <Compile Include="app\Models\FileModel.py" />
+    <Compile Include="app\Models\ProfileModel.py" />
     <Compile Include="app\Models\MessageModel.py">
       <SubType>Code</SubType>
     </Compile>

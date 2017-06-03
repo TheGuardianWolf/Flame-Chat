@@ -125,7 +125,7 @@ class UsersController(object):
     #    return '\n\n'
 
     @cherrypy.expose
-    def getActiveUsers(self):
+    def get(self):
         if not self.__isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 

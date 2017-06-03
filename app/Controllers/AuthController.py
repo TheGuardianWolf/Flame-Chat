@@ -1,5 +1,6 @@
 import cherrypy
 from datetime import datetime
+from time import sleep
 from app import Globals
 from app.Models.AuthModel import Auth
 
@@ -35,7 +36,7 @@ class AuthController(object):
             'location': location,
             'ip': ip,
             'port': Globals.publicPort,
-            'pubkey': self.SS.publicKey.exportKey('PEM')
+            'pubkey': self.SS.publicKey.exportKey('DER')
         }
 
         if enc > 0:
@@ -97,13 +98,22 @@ class AuthController(object):
         if not self.__isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 
+        cherrypy.response.stream = True
         cherrypy.response.headers['Content-Type'] = 'text/event-stream'
         errorCode = '-1'
         
-        if (datetime.now() - cherrypy.session['lastLoginReportTime']).seconds > 40:
-            (errorCode, errorMessage) = self.__dynamicAuth(cherrypy.session['username'], cherrypy.session['passhash'])
+        def content():
+            while True:
+                cherrypy.session.acquire_lock()
+                if (datetime.now() - cherrypy.session['lastLoginReportTime']).seconds > 40:
+                    (errorCode, errorMessage) = self.__dynamicAuth(cherrypy.session['username'], cherrypy.session['passhash'])
+                    yield str(errorCode) + errorMessage + '\n\n'
+                cherrypy.session.release_lock()
+                sleep(5)
+        
+        return content()
 
-        return str(errorCode) + errorMessage + '\n\n'
+    #stream._cp_config = {'response.stream': True}
 
     @cherrypy.expose
     def login(self, username, password):

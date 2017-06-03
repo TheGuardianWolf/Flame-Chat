@@ -1,15 +1,15 @@
 from app.Models.__Model import __Model
 
-class Message(__Model):
-    tableName = 'messages'
+class File(__Model):
+    tableName = 'files'
     tableSchema = [
         ('id', 'integer primary key'),
         ('sender', 'text'),
         ('destination', 'text'),
-        ('message', 'text'),
+        ('file', 'text'),
+        ('filename', 'text'),
+        ('content_type', 'text'),
         ('stamp', 'text'),
-        ('markdown', 'integer'),
-        ('encoding', 'integer'),
         ('encryption', 'integer'),
         ('hashing', 'integer'),
         ('hash', 'text'),
@@ -17,4 +17,4 @@ class Message(__Model):
     ]
 
     def __init__(self, *args):
-        super(Message, self).__init__(*args)
+        super(File, self).__init__(*args)
