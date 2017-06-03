@@ -1,6 +1,6 @@
 from app.Models.__Model import __Model
 
-class User(object):
+class User(__Model):
     tableName = 'users'
     tableSchema = [
         ('id', 'integer primary key'),
@@ -13,4 +13,4 @@ class User(object):
     ]
 
     def __init__(self, *args):
-        super(Auth, self).__init__(*args)
+        super(User, self).__init__(*args)

@@ -52,8 +52,12 @@ class Server(object):
             cherrypy.engine.signal_handler.subscribe()
         if hasattr(cherrypy.engine, 'console_control_handler'):
             cherrypy.engine.console_control_handler.subscribe()
-        cherrypy.engine.start()
-        cherrypy.engine.block()
+        try:
+            cherrypy.engine.start()
+        except:
+            sys.exit(1)
+        else:
+            cherrypy.engine.block()
 
     # stops the web application
     def stop(self):

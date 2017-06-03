@@ -83,7 +83,7 @@ class AuthController(object):
     def __storeAuth(self, username, passhash):
         q = self.DS.select(Auth, 'username=' + self.DS.queryFormat(username))
 
-        if q is not None:
+        if q is not None and len(q) > 0:
             q = q[0]
             if not q.passhash == passhash:
                 self.DS.update(Auth(q.id, q.username, passhash), 'id='+ self.DS.queryFormat(id))
@@ -92,10 +92,12 @@ class AuthController(object):
 
     @cherrypy.expose
     def stream(self):
+        if (cherrypy.request.remote.ip != '127.0.0.1'):
+            raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
         if not self.__isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 
-        cherrypy.response.headers['Content-Type'] = 'text/event-stream;charset=utf-8'
+        cherrypy.response.headers['Content-Type'] = 'text/event-stream'
         errorCode = '-1'
         
         if (datetime.now() - cherrypy.session['lastLoginReportTime']).seconds > 40:
@@ -105,6 +107,8 @@ class AuthController(object):
 
     @cherrypy.expose
     def login(self, username, password):
+        if (cherrypy.request.remote.ip != '127.0.0.1'):
+            raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
         passhash = self.LS.hashPassword(password)
         (errorCode, errorMessage) = self.__dynamicAuth(username, passhash)
         return str(errorCode)

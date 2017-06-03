@@ -11,4 +11,4 @@ class Message(__Model):
     ]
 
     def __init__(self, *args):
-        super(Auth, self).__init__(*args)
+        super(Message, self).__init__(*args)

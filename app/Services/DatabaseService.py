@@ -1,5 +1,5 @@
-import sqlite3
 import os
+from sqlite3 import IntegrityError, connect
 from app import Globals
 from app.Models.UserModel import User
 from app.Models.AuthModel import Auth
@@ -43,12 +43,16 @@ class DatabaseService(object):
         return '(' + joint.join(list) + ')'
 
     def queryMany(self, queries, fetch=False):
-        connection = sqlite3.connect(self.dbPath)
+        connection = connect(self.dbPath)
         db = connection.cursor()
         returnVals = []
 
         for query in queries:
-            db.execute(query)
+            try:
+                db.execute(query)
+            except IntegrityError:
+                raise IntegrityError('datatype mismatch in query: ' + query)
+
             if fetch:
                 returnVals.append(db.fetchall())
             else:
@@ -110,7 +114,8 @@ class DatabaseService(object):
             model = modelList[i]
             newModels = []
             for j, entry in enumerate(entries):
-                newModels.append(model(*entries[j]))
+                typedModelArgs = []
+                newModels.append(model.deserialize(entries[j]))
             newModelsList.append(newModels)
 
         return newModelsList

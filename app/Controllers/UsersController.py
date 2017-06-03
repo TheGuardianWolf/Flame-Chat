@@ -33,6 +33,7 @@ class UsersController(object):
             else:
                 for dbUser in results:
                     if not dbUser == userList[i]:
+                        userList[i].id = dbUser.id
                         updates.append(userList[i])
                         updatesConditions.append('id=' + self.DS.queryFormat(dbUser.id))
 
@@ -78,19 +79,19 @@ class UsersController(object):
 
             for userObj in json.values():
                 userArgs = []
-                for entryName, entryType in User.tableSchema:
-                    try:
-                        if entryType.find('integer') > -1:
-                            arg = int(userObj[entryName])
-                        else:
-                            arg = str(userObj[entryName])
-                    except KeyError:
-                        arg = None
-                    userArgs.append(arg)
-                userList.append(User(*userArgs))
+                #for entryName, entryType in User.tableSchema:
+                #    try:
+                #        if entryType.find('integer') > -1:
+                #            arg = int(userObj[entryName])
+                #        else:
+                #            arg = str(userObj[entryName])
+                #    except KeyError:
+                #        arg = None
+                #    userArgs.append(arg)
+                userList.append(User.deserialize(userObj))
 
-            self.__updateUsersTable(usersList)
-            self.activeUserList = usersList
+            self.__updateUsersTable(userList)
+            self.activeUserList = userList
             return (0, 'Successfully retrieved active user list from login server.')
             
         else:
@@ -128,8 +129,8 @@ class UsersController(object):
         if not self.__isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 
-        if (datetime.now() - self.lastUserListRefresh.seconds) > 10:
-            self.__dynamicRefreshActiveUsers()
+        #if (datetime.now() - self.lastUserListRefresh).seconds > 10:
+        self.__dynamicRefreshActiveUsers()
 
         userObjs = []
 
@@ -137,7 +138,7 @@ class UsersController(object):
             userObjs.append(user.serialize())
 
         json = dumps(userObjs)
-        cherrypy.response.headers['Content-Type'] = 'application/json;charset=utf-8'
+        cherrypy.response.headers['Content-Type'] = 'application/json'
         return json
 
 
