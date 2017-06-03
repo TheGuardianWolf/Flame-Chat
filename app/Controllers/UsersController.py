@@ -39,6 +39,9 @@ class UsersController(object):
         self.DS.insertMany(insertions)
         self.DS.updateMany(updates, updatesConditions)
 
+    def __refreshActivePeerUsers(self):
+        pass
+
     def __refreshActiveServerUsers(self, enc=1):
         if not self.__isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
@@ -88,7 +91,6 @@ class UsersController(object):
 
             self.__updateUsersTable(usersList)
             self.activeUserList = usersList
-            self.lastUserListRefresh = datetime.now()
             return (0, 'Successfully retrieved active user list from login server.')
             
         else:
@@ -97,7 +99,16 @@ class UsersController(object):
 
     def __dynamicRefreshActiveUsers(self):
         if self.LS.online:
-            return self.__refreshActiveServerUsers()
+            (errorCode, errorMessage) = self.__refreshActiveServerUsers()
+            if errorCode == -2:
+                (errorCode, errorMessage) = self.__refreshActivePeerUsers()
+                errorMessage += ' Request to login server failed with unhandled error.'
+        else:
+            (errorCode, errorMessage) = self.__refreshActivePeerUsers()
+            errorMessage += ' Login server offline or unreachable.'
+            
+        self.lastUserListRefresh = datetime.now()
+        return (errorCode, errorMessage)
 
     #@cherrypy.expose
     #def stream(self):

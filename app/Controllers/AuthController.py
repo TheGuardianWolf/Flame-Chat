@@ -21,7 +21,6 @@ class AuthController(object):
             cherrypy.session['authenticated'] = True
             cherrypy.session['username'] = username
             cherrypy.session['passhash'] = passhash
-            cherrypy.session['lastReportTime'] = datetime.now()
             return (-1, 'Locally verified.')
         else:
             cherrypy.session['authenticated'] = False
@@ -72,17 +71,14 @@ class AuthController(object):
             elif errorCode == -2:
                 (errorCode, errorMessage) = self.__localAuth(username, passhash)
                 errorMessage += ' Request to login server failed with unhandled error.'
-                return (errorCode, errorMessage)
             else:
                 cherrypy.session['authenticated'] = False
-
-            cherrypy.session['lastLoginReportTime'] = datetime.now()
-            return (errorCode, errorMessage)
         else:
             (errorCode, errorMessage) = self.__localAuth(username, passhash)
             errorMessage += ' Login server offline or unreachable.'
-            cherrypy.session['lastLoginReportTime'] = datetime.now()
-            return (errorCode, errorMessage)
+            
+        cherrypy.session['lastLoginReportTime'] = datetime.now()
+        return (errorCode, errorMessage)
 
     def __storeAuth(self, username, passhash):
         q = self.DS.select(Auth, 'username=' + self.DS.queryFormat(username))
