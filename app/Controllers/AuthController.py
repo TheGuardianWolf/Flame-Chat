@@ -102,18 +102,24 @@ class AuthController(object):
         cherrypy.response.headers['Content-Type'] = 'text/event-stream'
         errorCode = '-1'
         
+        username = cherrypy.session['username']
+        passhash = cherrypy.session['passhash']
+
+        cherrypy.session.release_lock()
+
         def content():
             while True:
-                cherrypy.session.acquire_lock()
-                if (datetime.now() - cherrypy.session['lastLoginReportTime']).seconds > 40:
-                    (errorCode, errorMessage) = self.__dynamicAuth(cherrypy.session['username'], cherrypy.session['passhash'])
-                    yield str(errorCode) + errorMessage + '\n\n'
-                cherrypy.session.release_lock()
-                sleep(5)
+                #if (datetime.now() - cherrypy.session['lastLoginReportTime']).seconds > 40:
+                (errorCode, errorMessage) = self.__dynamicAuth(username, passhash)
+                yield str(errorCode) + errorMessage + '\n\n'
+                sleep(40)
         
         return content()
 
-    #stream._cp_config = {'response.stream': True}
+    #stream._cp_config = {
+    #    'response.stream': True, 
+    #    'tools.sessions.locking': 'explicit'
+    #}
 
     @cherrypy.expose
     def login(self, username, password):
