@@ -25,9 +25,19 @@ class UsersController(object):
 
         insertions = []
         updates = []
+        updatesConditions = []
 
-        for results in q:
-            pass
+        for i, results in enumerate(q):
+            if len(results) == 0:
+                insertions.append(userList[i])
+            else:
+                for dbUser in results:
+                    if not dbUser == userList[i]:
+                        updates.append(userList[i])
+                        updatesConditions.append('id=' + self.DS.queryFormat(dbUser.id))
+
+        self.DS.insertMany(insertions)
+        self.DS.updateMany(updates, updatesConditions)
 
     def __refreshActiveServerUsers(self, enc=1):
         if not self.__isAuthenticated():
@@ -85,30 +95,38 @@ class UsersController(object):
             self.lastUserListRefresh = datetime.now()
             return (-2, 'Request error ' + str(status) + ': Login server user list not available.')
 
-    def __dynamicGetActiveUsers():
-        pass
+    def __dynamicRefreshActiveUsers(self):
+        if self.LS.online:
+            return self.__refreshActiveServerUsers()
 
-    @cherrypy.expose
-    def stream(self):
-        if not self.__isAuthenticated():
-            raise cherrypy.HTTPError(403, 'User not authenticated')
+    #@cherrypy.expose
+    #def stream(self):
+    #    if not self.__isAuthenticated():
+    #        raise cherrypy.HTTPError(403, 'User not authenticated')
 
-        cherrypy.response.headers['Content-Type'] = 'text/event-stream;charset=utf-8'
+    #    cherrypy.response.headers['Content-Type'] = 'text/event-stream;charset=utf-8'
 
-        if (self.LS.online):
-            if (datetime.now() - self.lastUserListRefresh.seconds) > 8:
-                (errorCode, errorMessage) = self.refreshUsersList()
+    #    if (datetime.now() - self.lastUserListRefresh.seconds) > 10:
+    #        lastActiveUsers = self.activeUserList
+    #        (errorCode, errorMessage) = self.__dynamicRefreshActiveUsers()
 
-        return '\n\n'
+    #    return '\n\n'
 
     @cherrypy.expose
     def getActiveUsers(self):
+        if not self.__isAuthenticated():
+            raise cherrypy.HTTPError(403, 'User not authenticated')
+
+        if (datetime.now() - self.lastUserListRefresh.seconds) > 10:
+            self.__dynamicRefreshActiveUsers()
+
         userObjs = []
 
         for user in self.activeUserList:
             userObjs.append(user.serialize())
 
         json = dumps(userObjs)
+        cherrypy.response.headers['Content-Type'] = 'application/json;charset=utf-8'
         return json
 
 
