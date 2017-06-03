@@ -21,6 +21,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app\Controllers\AuthController.py" />
+    <Compile Include="app\Controllers\PublicController.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Controllers\UsersController.py">
       <SubType>Code</SubType>
     </Compile>
