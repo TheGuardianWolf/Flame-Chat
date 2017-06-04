@@ -1,6 +1,6 @@
 var apiUrl = "http://localhost:8080/local";
 
-var contoso = angular.module('contoso', [
+var flame = angular.module('flame', [
   'ngRoute',
   'ngAria',
   'ngTouch',
@@ -11,8 +11,6 @@ var contoso = angular.module('contoso', [
     function( $compileProvider, $routeProvider, $locationProvider )
     {
         $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|data|ms-appx):/);
-
-        var options = {applicationName:'Contoso University'};
         // Configuration options are described below
 
         $routeProvider
@@ -21,9 +19,19 @@ var contoso = angular.module('contoso', [
                 controller  : 'authController'
             })
 
-            .when('/overview', {
-                templateUrl : 'views/overview.html',
-                controller  : 'overviewController'
+            .when('/conversations', {
+                templateUrl : 'views/split-pane.html',
+                controller  : 'conversationsController'
+            })
+
+            .when('/contacts', {
+                templateUrl: 'views/split-pane.html',
+                controller: 'contactsController'
+            })
+
+            .when('/profile', {
+                templateUrl: 'views/profile.html',
+                controller: 'profileController'
             })
             // use the HTML5 History API
         //$locationProvider.html5Mode(true);

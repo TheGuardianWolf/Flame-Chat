@@ -1,12 +1,12 @@
-contoso.controller('mainController', ['$scope', '$http', '$location', function ($scope, $http, $location) {
+flame.controller('mainController', ['$scope', '$http', '$location', function ($scope, $http, $location) {
     $scope.state = {
         loading: false,
-        authenticated: false,
+        authenticated: null,
         sidebarCompact: true,
         ajaxBusy: false,
     };
 
-    if ($scope.state.authenticated === false) {
+    if ($scope.state.authenticated === null) {
         $location.url('');
     }
 

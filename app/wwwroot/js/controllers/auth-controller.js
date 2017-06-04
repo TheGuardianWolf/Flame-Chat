@@ -1,5 +1,6 @@
-contoso.controller('authController', ['$scope', '$http', '$location', function ($scope, $http, $location) {
+flame.controller('authController', ['$scope', '$http', '$location', function ($scope, $http, $location) {
     var authenticate = function(username, password) {
+        $scope.state.loading = true;
         return $http({
             method: 'POST',
             url: [apiUrl, 'auth', 'login'].join('/') + '/',
@@ -10,15 +11,40 @@ contoso.controller('authController', ['$scope', '$http', '$location', function (
         })
         .then(
             function success(response) {
-                console.log(response)
-                $.Notify({
-                    caption: 'Success',
-                    content: 'Logged into local server.',
-                    type: 'success'
-                });
+                console.log(response);
+                $scope.state.loading = false;
+                errorCode = parseInt(reponse.data);
+                if (errorCode === 0) {
+                    $.Notify({
+                        caption: 'Success',
+                        content: 'Logged into local server.',
+                        type: 'success'
+                    });
+                    $scope.state.authenticated = 'server';
+                }
+                else if (errorCode === -1 || errorCode === -2) {
+                    $.Notify({
+                        caption: 'Warning',
+                        content: 'Locally authenticated, login server may be unavailable.',
+                        type: 'warning'
+                    });
+                    $scope.state.authenticated = 'local';
+                }
+                else {
+                    $.Notify({
+                        caption: 'Error ' + response.data,
+                        content: 'Unable to authenticate, login server reports error.',
+                        type: 'alert'
+                    });
+                }
+
+                if (['server', 'local'].includes($scope.state.authenticated)) {
+                    $location.path('conversations');
+                }
             },
             function fail(response) {
-                console.log(response)
+                console.log(response);
+                $scope.state.loading = false;
                 $.Notify({
                     caption: 'Error',
                     content: 'Unable to authenticate, local server does not have an authentication source.',
@@ -28,7 +54,7 @@ contoso.controller('authController', ['$scope', '$http', '$location', function (
         );
     };
 
-    $scope.login = {}
+    $scope.login = {};
 
     $scope.login.data = {
         username: '',
@@ -38,84 +64,4 @@ contoso.controller('authController', ['$scope', '$http', '$location', function (
     $scope.login.submit = function() {
         authenticate($scope.login.data.username, $scope.login.data.password);
     };
-
-    // $scope.login = {
-    //     data: {
-            
-    //     },
-    //     submit: function () {
-    //         if ($scope.state.ajaxBusy) {
-    //             return false;
-    //         }
-    //         $http({
-    //             method: 'POST',
-    //             url: 'https://university-contoso-api.azurewebsites.net/Token',
-    //             data: $.param({
-    //                 grant_type: 'password',
-    //                 username: $scope.login.data.Email,
-    //                 password: $scope.login.data.Password,
-    //             })
-    //         }).then(function successCallback(response) {
-    //             $scope.state.loading = true;
-    //             Cache.auth = response;
-    //             Cache.auth.header = 'Bearer ' + response.data.access_token;
-    //             $scope.requests('GET', 'Account.UserInfo')
-    //                 .then(function successCallback(response) {
-    //                     Cache.userAccount = response.data;
-    //                     return $scope.requests('GET', 'Students');
-    //                 }, function errorCallback(response) {
-    //                     $.Notify({
-    //                         caption: 'Error',
-    //                         content: 'Cannot retrieve remote data.',
-    //                         type: 'alert'
-    //                     });
-    //                 })
-    //                 .then(function successCallback(response) {
-    //                     if (response.data.length > 0) {
-    //                         var foundUser = false;
-    //                         for (var i = 0; i < response.data.length; i++) {
-    //                             if (Cache.userAccount.ID === response.data[i].AuthID) {
-    //                                 Cache.user = response.data[i];
-    //                                 foundUser = true;
-    //                                 break;
-    //                             }
-    //                         }
-    //                         if (!foundUser) {
-    //                             $.Notify({
-    //                                 caption: 'Warning',
-    //                                 content: 'You seem to be not registered but have a valid identity token, please try signing up again.',
-    //                                 type: 'warning'
-    //                             });
-    //                         } else {
-    //                             requestData().then(function successCallback(response) {}, function errorCallback(response) {
-    //                                 console.log(response);
-    //                                 $.Notify({
-    //                                     caption: 'Error',
-    //                                     content: 'Cannot retrieve remote data.',
-    //                                     type: 'alert'
-    //                                 });
-    //                                 $scope.state.loading = false;
-    //                             });
-    //                         }
-    //                     }
-    //                 }, function errorCallback(response) {
-    //                     console.log(response);
-    //                     $.Notify({
-    //                         caption: 'Cannot log in',
-    //                         content: 'Credentials invalid.',
-    //                         type: 'alert'
-    //                     });
-    //                     $scope.state.loading = false;
-    //                 });
-    //         }, function errorCallback(response) {
-    //             console.log(response);
-    //             $.Notify({
-    //                 caption: 'Cannot log in',
-    //                 content: 'Credentials invalid.',
-    //                 type: 'alert'
-    //             });
-    //             $scope.state.loading = false;
-    //         });
-    //     }
-    // };
 }]);
