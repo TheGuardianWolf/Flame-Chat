@@ -21,19 +21,4 @@ contoso.controller('mainController', ['$scope', '$http', '$location', function (
             $scope.state.sidebarCompact = true;
         }
     };
-
-    $scope.requests = function (type, route, data) {
-        if (data === undefined) {
-            data = $.param('');
-        }
-        var request = $http({
-            method: type,
-            url: 'https://university-contoso-api.azurewebsites.net/api/' + route.split('.').join('/'),
-            headers: {
-                'Accept': 'application/json',
-            },
-            'data': data
-        });
-        return request;
-    };
 }]);

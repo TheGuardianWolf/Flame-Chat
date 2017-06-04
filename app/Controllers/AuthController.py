@@ -122,9 +122,22 @@ class AuthController(object):
     #}
 
     @cherrypy.expose
-    def login(self, username, password):
+    @cherrypy.tools.json_in()
+    def login(self):
         if (cherrypy.request.remote.ip != '127.0.0.1'):
             raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
+
+        try:
+            request = cherrypy.request.json
+        except AttributeError:
+            raise cherrypy.HTTPError(400, 'JSON payload not sent.')
+
+        if not self.RS.checkObjectKeys(request, ['username', 'password']):
+            raise cherrypy.HTTPError(400, 'Missing required parameters.')
+        
+        username = request['username']
+        password = request['password']
         passhash = self.LS.hashPassword(password)
         (errorCode, errorMessage) = self.__dynamicAuth(username, passhash)
-        return str(errorCode)
+        cherrypy.response.headers['Content-Type'] = 'text/plain'
+        return unicode(errorCode)

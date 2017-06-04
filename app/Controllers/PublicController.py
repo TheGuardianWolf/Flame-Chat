@@ -1,6 +1,7 @@
 import cherrypy
 from datetime import datetime
 from json import loads, dumps
+from binascii import hexlify
 from os import path
 from app import Globals
 from app.Models.AuthModel import Auth
@@ -31,14 +32,6 @@ class PublicController(object):
 
     def __userFilter(self, ip):
         return True
-
-    def __checkRequiredKeys(self, obj, keys):
-        for key in keys:
-            try:
-                if obj[key] == None:
-                    return False
-            except KeyError:
-                return False
 
     @cherrypy.expose
     def index(self):
@@ -72,7 +65,7 @@ class PublicController(object):
 
         request = cherrypy.request.json
 
-        if not self.__checkRequiredKeys(self, request, ['sender', 'destination', 'message', 'stamp']):
+        if not self.RS.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'stamp']):
             return '1'
 
         request['encoding'] = unicode(encoding)
@@ -95,13 +88,13 @@ class PublicController(object):
 
         request = cherrypy.request.json
 
-        if not self.__checkRequiredKeys(self, request, ['sender', 'profile_username']):
+        if not self.RS.checkObjectKeys(self, request, ['sender', 'profile_username']):
             return '1'
 
         responseObj = {}
 
         responseObj['error'] = 0
-        responseObj['pubKey'] = self.SS.publicKey.exportKey('DER')
+        responseObj['pubKey'] = hexlify(self.SS.publicKey.exportKey('DER'))
 
         cherrypy.response.headers['Content-Type'] = 'application/json'
         return dumps(responseObj)
@@ -114,7 +107,7 @@ class PublicController(object):
 
         request = cherrypy.request.json
 
-        if not self.__checkRequiredKeys(self, request, ['sender', 'destination', 'message', 'encryption']):
+        if not self.RS.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'encryption']):
             return '1'
 
         if self.encryption.count(str(request['encryption'])) == 0:
@@ -149,11 +142,11 @@ class PublicController(object):
         profileObj = profile.serialize()
         del profileObj['id']
         del profileObj['userId']
-        
-        cherrypy.response.headers['Content-Type'] = 'application/json'
+        profileObj['encoding'] = 0
 
+        cherrypy.response.headers['Content-Type'] = 'application/json'
+         
         if user.publicKey is not None:
-            profileObj['encoding'] = 0
             encProfileObj = {}
             try:
                 for key, value in profileObj.items():
@@ -173,7 +166,7 @@ class PublicController(object):
 
         request = cherrypy.request.json
 
-        if not self.__checkRequiredKeys(self, request, ['sender', 'destination', 'file', 'filename', 'content_type', 'stamp', 'hashing']):
+        if not self.RS.checkObjectKeys(self, request, ['sender', 'destination', 'file', 'filename', 'content_type', 'stamp', 'hashing']):
             return '1'
 
         request['encoding'] = unicode(encoding)
@@ -193,7 +186,7 @@ class PublicController(object):
 
         request = cherrypy.request.json
 
-        if not self.__checkRequiredKeys(self, request, ['requestor']):
+        if not self.RS.checkObjectKeys(self, request, ['requestor']):
             return '1'
 
         try:
@@ -221,7 +214,7 @@ class PublicController(object):
 
         request = cherrypy.request.json
 
-        if not self.__checkRequiredKeys(self, request, ['profile_username']):
+        if not self.RS.checkObjectKeys(self, request, ['profile_username']):
             return '1'
 
         responseObj = {}

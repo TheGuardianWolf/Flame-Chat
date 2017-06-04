@@ -1,26 +1,25 @@
 <div class="auth wrapper" ng-controller="authController">
-  <div class="auth-background bg-darker">
-    <div class="auth-strip bg-grayLighter">
-      <div class="logo">
-        <h1 class="">Flame Chat</h1>
-      </div>
+    <div class="auth-background bg-darker">
+        <div class="auth-strip bg-grayLighter">
+            <div class="logo">
+                <h1 class="text-icon">🔥</h1>
+                <h1 class="">Flame Chat</h1>
+            </div>
 
-      <div class="user-inputs">
-        <form ng-submit="login.submit()" class="login">
-          <div class="input-control text">
-            <label>Username</label>
-            <span class="mif-user prepend-icon"></span>
-            <input ng-required type="text" name="upi" placeholder="Username (upi)"
-            ng-model="login.data.upi">
-          </div>
-          <div class="input-control password">
-            <label>Password</label>
-            <span class="mif-lock prepend-icon"></span>
-            <input ng-required type="password" name="Password" placeholder="Password"
-            ng-model="login.data.password">
-          </div>
-          <input class="button primary bg-hover-cyan" type="submit" value="Login">
-        </form>
+            <div class="user-inputs">
+                <form ng-submit="login.submit()" class="login">
+                    <div class="input-control text">
+                        <label>Username</label>
+                        <span class="mif-user prepend-icon"></span>
+                        <input ng-required type="text" name="username" placeholder="Username (upi)" ng-model="login.data.username">
+                    </div>
+                    <div class="input-control password">
+                        <label>Password</label>
+                        <span class="mif-lock prepend-icon"></span>
+                        <input ng-required type="password" name="password" placeholder="Password" ng-model="login.data.password">
+                    </div>
+                    <input class="button primary bg-hover-cyan" type="submit" value="Login">
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
