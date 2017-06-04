@@ -1,0 +1,99 @@
+<div class="courses wrapper" ng-controller="coursesController">
+  <div data-role="dialog" id="changeCourse" class="padding20 dialog" data-close-button="true" data-windows-style="true">
+    <h1>Change this course</h1>
+    <form ng-submit="changeCourse.go()">
+      <div class="input-control select">
+        <select ng-required name="grade" ng-model="changeCourse.grade">
+          <option value="">---Grade---</option>
+          <option value="0">A</option>
+          <option value="1">B</option>
+          <option value="2">C</option>
+          <option value="3">D</option>
+          <option value="4">F</option>
+        </select>
+      </div>
+      <div class="input-control text">
+          <input ng-required type="number" placeholder="New progress value (%)" ng-model="changeCourse.completion"/>
+      </div>
+      <div class="input-control text">
+          <input type="submit" class="button primary bg-hover-cyan" value="Submit Changes"/>
+      </div>
+    </form>
+  </div>
+  <div class="bg-grayLighter content">
+    <div class="title">
+      <h1>Courses</h1>
+    </div>
+    <div class="flex-grid course-container">
+      <div class="row">
+        <div class="cell colspan12">
+          <ul class="course-list">
+            <li class="bg-white" ng-repeat="course in enrolledCourses track by $index">
+              <div class="header clearfix">
+                <h2 class="place-left">{{course.CourseName}}</h2>
+                <h2 class="place-right">Completed {{getPercentComplete(course.ID).toString()}}%<small><br/>Current grade: {{getGrade(course.ID)}}</small></h2>
+              </div>
+              <div class="info clearfix" ng-show="hasCoursework(course.ID, course.CompletionInfo)">
+                <h4>
+                  Course Information
+                </h4>
+                <h5 ng-hide="!courseAssignments[course.ID]"><strong>Assignments</strong></h5>
+                <ul class="assignments simple-list blue-bullet">
+                  <li ng-repeat="assignment in courseAssignments[course.ID]">
+                    {{assignment.Name}} worth {{assignment.Weighting}}% to be completed by {{parseDate(assignment.CompletionDate)}}
+                  </li>
+                </ul>
+                <h5 ng-hide="!courseTests[course.ID]"><strong>Tests</strong></h5>
+                <ul class="tests simple-list blue-bullet">
+                  <li ng-repeat="test in courseTests[course.ID]">
+                    {{test.Name}} worth {{test.Weighting}}% to be completed by {{parseDate(test.CompletionDate)}}
+                  </li>
+                </ul>
+                <h5 ng-hide="!course.CompletionInfo"><strong>Completion Information</strong></h5>
+                <p ng-hide="!course.CompletionInfo">{{course.CompletionInfo}}</p>
+              </div>
+              <div class="controls clearfix">
+                <div class="place-right">
+                  <button class="button primary" ng-click="onClickChange(course.ID)">Change</button>
+                  <button class="button danger" ng-click="dropCourse(course.ID)">Drop</button>
+                </div>
+              </div>
+            </li>
+          </ul>
+          <ul class="course-list">
+            <li class="bg-white" ng-repeat="course in freeCourses track by $index">
+              <div class="header clearfix">
+                <h2 class="place-left">{{course.CourseName}}</h2>
+                <h2 class="place-right">Not Enrolled</h2>
+              </div>
+              <div class="info clearfix" ng-show="hasCoursework(course.ID, course.CompletionInfo)">
+                <h4>
+                  Course Information
+                </h4>
+                <h5 ng-hide="!courseAssignments[course.ID]"><strong>Assignments</strong></h5>
+                <ul class="assignments simple-list blue-bullet">
+                  <li ng-repeat="assignment in courseAssignments[course.ID]">
+                    {{assignment.Name}} worth {{assignment.Weighting}}% to be completed by {{parseDate(assignment.CompletionDate)}}
+                  </li>
+                </ul>
+                <h5 ng-hide="!courseTests[course.ID]"><strong>Tests</strong></h5>
+                <ul class="tests simple-list blue-bullet">
+                  <li ng-repeat="test in courseTests[course.ID]">
+                    {{test.Name}} worth {{test.Weighting}}% to be completed by {{parseDate(test.CompletionDate)}}
+                  </li>
+                </ul>
+                <h5 ng-hide="course.CompletionInfo === ''"><strong>Completion Information</strong></h5>
+                <p ng-hide="course.CompletionInfo === ''">{{course.CompletionInfo}}</p>
+              </div>
+              <div class="controls clearfix">
+                <div class="place-right">
+                  <button class="button primary" ng-click="enrollCourse(course.ID)">Enroll</button>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

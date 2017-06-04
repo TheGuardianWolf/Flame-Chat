@@ -1,0 +1,26 @@
+<div class="tasks wrapper" ng-controller="tasksController">
+  <div class="bg-grayLighter content">
+    <div class="title">
+      <h1>Tasks</h1>
+    </div>
+    <div class="flex-grid course-container">
+      <div class="row">
+        <div class="cell colspan12">
+          <div class="listview-outlook" data-role="listview">
+            <div class="list bg-white" ng-repeat="task in toDos track by $index">
+                <div class="list-content clearfix" ng-click="completeTask()">
+                    <span class="list-title place-left">{{task.Description}}</span>
+                    <span class="mif-checkmark place-right" ng-show="task.Complete == true"></span>
+                </div>
+            </div>
+            <div class="list bg-white">
+              <div class="list-content clearfix text-center" ng-click="addTask()">
+                <span class="list-new mif-plus"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

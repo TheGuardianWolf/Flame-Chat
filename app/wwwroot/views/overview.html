@@ -1,0 +1,67 @@
+<div class="overview wrapper" ng-controller="overviewController">
+  <div class="bg-grayLighter tile-area content">
+    <div class="title">
+      <h1>At a glance...</h1>
+    </div>
+    <!-- <div class="progress large" data-value="85" data-color="bg-red" data-role="progress">
+      <span class="progress-overlay">Progress</span>
+      <div style="width:{{totalProgress}}" class="bar ribbed-amber"></div>
+    </div> -->
+    <div class="flex-grid">
+      <div class="row">
+        <div class="cell colspan6">
+          <div class="bg-white material to-do">
+            <h3>Tasks</h3>
+            <div class="listview-outlook" data-role="listview">
+              <div class="to-do-list list" ng-repeat="task in taskList">
+                <div class="list-content">
+                  <span class="list-title">{{task.Description}}</span>
+                  <span class="list-new mif-checkmark place-right"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white material courses">
+            <h3>Courses</h3>
+            <div class="listview-outlook" data-role="listview">
+              <div class="course-list list" ng-repeat="course in courseList">
+                <div class="list-content">
+                  <span class="list-title">{{course.CourseName}} </span>
+                  <span class="list-subtitle">Grade {{getGrade(course.ID)}}</span>
+                  <span class="list-complete place-right">{{getPercentComplete(course.ID).toString()}}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cell material colspan6">
+          <div class="bg-white coursework">
+            <h3>Next {{nextCoursework.Type}}</h3>
+            <div class="coursework-info">
+              <div class="flex-grid">
+                <div class="row">
+                  <div class="cell colspan8">
+                    <h1>{{nextCoursework.Name}}</h1>
+                  </div>
+                  <div class="cell colspan4">
+                    <h1>{{nextCoursework.Weighting}}</h1>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell colspan4">
+                    <h2>
+                      <small>Due:</small>
+                    </h2>
+                  </div>
+                  <div class="cell colspan8">
+                    <h2 class="small">{{nextCoursework.CompletionDate}}</h2>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
