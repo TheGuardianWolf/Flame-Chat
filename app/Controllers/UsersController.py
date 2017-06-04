@@ -40,9 +40,6 @@ class UsersController(object):
         self.DS.insertMany(insertions)
         self.DS.updateMany(updates, updatesConditions)
 
-    def __refreshActivePeerUsers(self):
-        pass
-
     def __refreshActiveServerUsers(self, enc=1):
         if not self.__isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
@@ -55,7 +52,7 @@ class UsersController(object):
 
         if enc > 0:
             for key in payload.keys():
-                payload[key] = self.SS.serverEncrypt(str(payload[key]))
+                payload[key] = self.SS.serverEncrypt(unicode(payload[key], 'utf-8', 'replace'))
             payload['enc'] = 1
 
         (status, response) = self.RS.get(Globals.loginRoot, '/getList', payload)
@@ -79,15 +76,6 @@ class UsersController(object):
 
             for userObj in json.values():
                 userArgs = []
-                #for entryName, entryType in User.tableSchema:
-                #    try:
-                #        if entryType.find('integer') > -1:
-                #            arg = int(userObj[entryName])
-                #        else:
-                #            arg = str(userObj[entryName])
-                #    except KeyError:
-                #        arg = None
-                #    userArgs.append(arg)
                 userList.append(User.deserialize(userObj))
 
             self.__updateUsersTable(userList)
@@ -125,6 +113,7 @@ class UsersController(object):
     #    return '\n\n'
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def get(self):
         if not self.__isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
@@ -137,8 +126,8 @@ class UsersController(object):
         for user in self.activeUserList:
             userObjs.append(user.serialize())
 
-        json = dumps(userObjs)
-        cherrypy.response.headers['Content-Type'] = 'application/json'
-        return json
+        #json = dumps(userObjs)
+        #cherrypy.response.headers['Content-Type'] = 'application/json'
+        return userObjs
 
 

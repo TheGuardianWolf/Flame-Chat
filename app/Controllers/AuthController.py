@@ -1,6 +1,7 @@
 import cherrypy
 from datetime import datetime
 from time import sleep
+from binascii import hexlify
 from app import Globals
 from app.Models.AuthModel import Auth
 
@@ -36,12 +37,12 @@ class AuthController(object):
             'location': location,
             'ip': ip,
             'port': Globals.publicPort,
-            'pubkey': self.SS.publicKey.exportKey('DER')
+            'pubkey': hexlify(self.SS.publicKey.exportKey('DER'))
         }
 
         if enc > 0:
             for key in payload.keys():
-                payload[key] = self.SS.serverEncrypt(str(payload[key]))
+                payload[key] = self.SS.serverEncrypt(unicode(payload[key], 'utf-8', 'replace'))
 
             payload['enc'] = 1
 
@@ -51,8 +52,9 @@ class AuthController(object):
             (errorCode, errorMessage) = response.read().split(',')
 
             errorCode = int(errorCode)
-
+            
             if errorCode ==  6 and payload['enc'] == 1:
+                raise Exception((errorCode, errorMessage))
                 (errorCode, errorMessage) = self.__loginServerAuth(username, passhash, enc=0)
                 errorCode = int(errorCode)
 
