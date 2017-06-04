@@ -32,7 +32,7 @@ var flame = angular.module('flame', [
             .when('/profile', {
                 templateUrl: 'views/profile.html',
                 controller: 'profileController'
-            })
+            });
             // use the HTML5 History API
         //$locationProvider.html5Mode(true);
     }
