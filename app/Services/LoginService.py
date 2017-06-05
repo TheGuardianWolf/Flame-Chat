@@ -7,6 +7,7 @@ import socket
 class LoginService(object):
     def __init__(self):
         self.online = True
+        self.ip = None
 
     def __getExternalIP(self):
         return urlopen('http://ip.42.pl/raw').read()
@@ -46,10 +47,13 @@ class LoginService(object):
             wifiIntIPArr = Globals.universityWifi.split('.')
             
             if (currIntIPArr[0], currIntIPArr[1]) == (desktopIntIPArr[0], desktopIntIPArr[1]):
+                self.ip = currIntIP
                 return (0, currIntIP)
             elif (currIntIPArr[0], currIntIPArr[1]) == (wifiIntIPArr[0], wifiIntIPArr[1]):
+                self.ip = extIp
                 return (1, extIP)
 
+        self.ip = extIP
         return (2, extIP)
 
     def hashPassword(self, password):

@@ -38,6 +38,7 @@ class StreamController(object):
             self.__profiles.userProfileQuery()
 
         if len(self.MS.data['pushRequests']) > 0:
+            pass
 
 
     @cherrypy.expose

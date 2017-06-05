@@ -41,6 +41,11 @@ class SecureService(object):
             privateFile.close()
             print 'Created new public key at ' + Globals.publicKeyPath
 
+    def cmpHash(self, raw):
+        m = hashlib.md5()
+        m.update(raw)
+        return m.hexdigest()
+
     def hash(self, raw, standard):
         standard = unicode(standard)
 

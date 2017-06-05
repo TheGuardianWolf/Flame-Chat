@@ -76,9 +76,9 @@ class PublicController(__Controller):
         msgId = self.DS.insert(msg)
 
         msgMetaTime = MessageMeta(None, msgId, 'recievedTime', recievedTime)
-        msgMetaStatus = MessageMeta(None, msgId, 'relayStatus', 'new')
+        msgMetaStatus = MessageMeta(None, msgId, 'relayStatus', 'unsent')
 
-        self.DS.insertMany([msgMeta, msgMetaStatus])
+        self.DS.insertMany(msgMetaTime + msgMetaStatus)
 
         return '0'
         

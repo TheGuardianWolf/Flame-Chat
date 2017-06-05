@@ -148,26 +148,25 @@ class DatabaseService(object):
         except IndexError:
             return None
 
-    def updateMany(self, modelList, conditionList):
+    def updateMany(self, modelList):
         command = 'UPDATE'
         queries = []
 
         for i, model in enumerate(modelList):
-            condition = conditionList[i]
-            if condition is not None:
-                queryParts = [command, model.tableName, 'SET']
-                entries = []
-                for entry in model.tableSchema:
-                    entries.append(entry[0] + ' = ' + self.queryFormat(getattr(model, entry[0])))
-                queryParts.append(','.join(entries))
-                queryParts.append('WHERE')
-                queryParts.append(condition)
-                queries.append(' '.join(queryParts))
+            queryParts = [command, model.tableName, 'SET']
+            entries = []
+            for entry in model.tableSchema:
+                entries.append(entry[0] + ' = ' + self.queryFormat(getattr(model, entry[0])))
+            queryParts.append(','.join(entries))
+            queryParts.append('WHERE')
+            queryParts.append('id=' + self.queryFormat(model.id))
+            queries.append(' '.join(queryParts))
 
         return self.queryMany(queries)
 
-    def update(self, model, condition):
+    def update(self, model):
         try:
-            return self.updateMany([model], [condition])[0]
+            return self.updateMany([model])[0]
         except IndexError:
             return None
+
