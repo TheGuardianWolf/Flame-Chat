@@ -5,6 +5,7 @@ from app.Models.AuthModel import Auth
 from app.Models.MessageModel import Message
 from app.Models.MessageMetaModel import MessageMeta
 from app.Models.UserModel import User
+from app.Models.UserMetaModel import UserMeta
 from app.Models.ProfileModel import Profile
 from app.Models.FileModel import File
 from app.Models.FileMetaModel import FileMeta
@@ -16,7 +17,7 @@ class DatabaseService(object):
 
     def __checkDB(self):
         if not os.path.isfile(self.dbPath):
-            models = [User, Auth, Message, MessageMeta, Profile, File, FileMeta]
+            models = [User, UserMeta, Auth, Message, MessageMeta, Profile, File, FileMeta]
             queries =  []
             command = 'CREATE TABLE IF NOT EXISTS'
             for model in models:

@@ -34,7 +34,7 @@ class ProfilesController(__Controller):
         self.DS.updateMany(updates, updatesConditions)
 
     def userProfileQuery(self):
-        self.MS.data['lastUserProfileQuery'] = datetime.now()
+        self.MS.data['lastUserProfileQuery'] = datetime.utcnow()
         return (0, 'Active user data updated')
         
         try:

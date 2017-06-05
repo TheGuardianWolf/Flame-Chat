@@ -77,7 +77,7 @@ class UsersController(__Controller):
             return (0, 'Successfully retrieved active user list from login server.')
             
         else:
-            self.MS.data['lastUserListRefresh'] = datetime.now()
+            self.MS.data['lastUserListRefresh'] = datetime.utcnow()
             return (-2, 'Request error ' + str(status) + ': Login server user list not available.')
 
     def dynamicRefreshActiveUsers(self, username, passhash):
@@ -87,7 +87,7 @@ class UsersController(__Controller):
             errorCode = -2
             errorMessage = 'Login server is offline.'
             
-        self.MS.data['lastUserListRefresh'] = datetime.now()
+        self.MS.data['lastUserListRefresh'] = datetime.utcnow()
         return (errorCode, errorMessage)
 
     # Call remote peer getList

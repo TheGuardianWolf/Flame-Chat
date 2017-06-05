@@ -1,4 +1,5 @@
 import cherrypy
+import os
 from app import Globals
 from app.Services.DatabaseService import DatabaseService
 from app.Services.LoginService import LoginService
@@ -11,6 +12,8 @@ from app.Routers.RemoteRouter import RemoteRouter
 
 class Server(object):
     def __init__(self):
+        os.environ['TZ']='UTC'
+
         self.globalConfig = {
             'server.socket_host': '0.0.0.0', 
             'server.socket_port': Globals.publicPort,

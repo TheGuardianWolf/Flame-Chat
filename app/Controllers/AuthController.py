@@ -80,7 +80,7 @@ class AuthController(__Controller):
             except KeyError:
                 self.MS.data['authenticatedUsers'] = [username]
             
-        cherrypy.session['lastLoginReportTime'] = datetime.now()
+        cherrypy.session['lastLoginReportTime'] = datetime.utcnow()
         return (errorCode, errorMessage)
 
     def __storeAuth(self, username, passhash):

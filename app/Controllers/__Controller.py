@@ -19,7 +19,7 @@ class __Controller(object):
             return False
 
     def checkTiming(self, object, key, assertSecondsPassed):
-        if key not in object or (datetime.now() - object[key]).seconds >= assertSecondsPassed:
+        if key not in object or (datetime.utcnow() - object[key]).seconds >= assertSecondsPassed:
             return True
         return False
 

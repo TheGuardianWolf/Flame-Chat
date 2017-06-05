@@ -11,6 +11,7 @@ class StreamController(object):
 
         self.__auth = controllers['AuthController']
         self.__users = controllers['UsersController']
+        self.__messages = controllers['MessagesController']
         self.__profiles = controllers['ProfilesController']
         self.__status = controllers['StatusController']
 

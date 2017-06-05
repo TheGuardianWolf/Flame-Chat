@@ -51,8 +51,16 @@ class SecureService(object):
 
         if standard not in Globals.standards.hashing:
             raise ValueError('Standard unsupported')
-        m = getattr(hashlib, hashMethod)
-        m.update(str(raw))
+
+        if standard == '0':
+            return None
+        elif standard == '1':
+            m = hashlib.sha256()
+            m.update(str(raw))
+        elif standard == '3':
+            m = hashlib.sha512()
+            m.update(str(raw))
+        
         return m.hexdigest()
 
     def decrypt(self, enc, standard):

@@ -69,7 +69,7 @@ class PublicController(__Controller):
 
         request['encoding'] = unicode(encoding)
 
-        recievedTime = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        recievedTime = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
 
         msg = Message.deserialize(request)
 
