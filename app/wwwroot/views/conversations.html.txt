@@ -1,0 +1,55 @@
+<div class="conversations wrapper">
+    <div class="list-pane">
+        <div class="list-wrapper" ng-repeat="">
+            <div class="list-title">
+                <h3></h3>
+            </div>
+            <ul class="list">
+                <li class="item" ng-repeat="model in collection track by model.id" ng-click="">
+                    <div class="icon">
+                        <img src="{{model.imageUrl}}"/>
+                    </div>
+                    <div class="name">
+                        {{model.name}}
+                    </div>
+                    <div class="alert" ng-show="">
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="content-pane">
+        <div class="content-header">
+            <div class="icon">
+                <img src="{{model.imageUrl}}"/>
+            </div>
+            <div class="title">
+                <h3></h3>
+            </div>
+            <div class="status">
+            </div>
+        </div>
+        <div class="content">
+            <div class="message-list-wrapper">
+                <ol class="message-list">
+                    <li class="item">
+                        <div class="bubble">
+                            <span></span>
+                        </div>
+                        <div class="time">
+                            <span></span>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <div class="content-footer">
+            <div class="new-message">
+                <input type="text" name="message"/>
+                <input type="file" name="attachment"/>
+                <button class="emote" data-emote-id="0" ng-click="insertEmote(this)">🔥</button>
+                <button class="send" type="submit" ng-click="sendMessage()"></button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -19,11 +19,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/metro/3.0.17/css/metro-colors.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/metro/3.0.17/css/metro-schemes.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/metro/3.0.17/css/metro-icons.min.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/metro/3.0.17/css/metro-responsive.min.css"/>
+    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/metro/3.0.17/css/metro-responsive.min.css"/>-->
     <link rel="stylesheet" href="css/main.css">
 </head>
 
-<body ng-app="contoso" ng-controller="mainController" ng-cloak>
+<body ng-app="flame" ng-controller="mainController" ng-cloak>
     <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
@@ -34,7 +34,7 @@
 
     <!-- Begin top bar -->
     <div class="app-bar fixed-top darcula bg-darker" ng-show="state.authenticated">
-        <a class="app-bar-element branding" href="#overview">Contoso University</a>
+        <span class="app-bar-element branding">Flame Chat</span>
     </div>
     <!-- End top bar -->
 
@@ -46,36 +46,28 @@
             </a>
         </li>
         <li>
-            <a href="#overview" ng-click="">
-                <span class="mif-apps icon"></span>
-                <span class="title">Overview</span>
-            </a>
-        </li>
-        <li>
-            <a href="#tasks">
-                <span class="mif-clipboard icon"></span>
-                <span class="title">Tasks</span>
-                <span class="counter">{{counters.tasks}}</span>
-            </a>
-        </li>
-        <li>
-            <a href="#courses">
-                <span class="mif-library icon"></span>
-                <span class="title">Courses</span>
-                <span class="counter">{{counters.courses}}</span>
-            </a>
-        </li>
-        <li>
-            <a href="#discussion">
+            <a href="#" ng-click="goto('conversations')">
                 <span class="mif-bubbles icon"></span>
-                <span class="title">Discussion</span>
+                <span class="title">Conversations</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" ng-click="goto('contacts')">
+                <span class="mif-users icon"></span>
+                <span class="title">Contacts</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" ng-click="goto('profile')">
+                <span class="mif-profile icon"></span>
+                <span class="title">Profile</span>
             </a>
         </li>
     </ul>
     <!-- End sidebar-->
 
     <!-- Routed page begin -->
-    <div class="frame bg-grayLighter" ng-view>
+    <div class="frame bg-black" ng-view>
 
 
 

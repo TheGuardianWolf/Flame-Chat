@@ -21,16 +21,24 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="app\Controllers\AuthController.py" />
+    <Compile Include="app\Controllers\FilesController.py" />
+    <Compile Include="app\Controllers\ProfilesController.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Controllers\PublicController.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="app\Controllers\MessagesController.py" />
+    <Compile Include="app\Controllers\StreamController.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\Controllers\UsersController.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="app\Controllers\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="app\Controllers\__Controller.py" />
     <Compile Include="app\Globals.py" />
     <Compile Include="app\Models\AuthModel.py" />
     <Compile Include="app\Models\FileModel.py" />

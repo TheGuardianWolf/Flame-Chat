@@ -3,7 +3,7 @@ flame.controller('authController', ['$scope', '$http', '$location', function ($s
         $scope.state.loading = true;
         return $http({
             method: 'POST',
-            url: [apiUrl, 'auth', 'login'].join('/') + '/',
+            url: apiRoute(['auth', 'login']),
             data: JSON.stringify({
                 username: username,
                 password: password
@@ -11,16 +11,14 @@ flame.controller('authController', ['$scope', '$http', '$location', function ($s
         })
         .then(
             function success(response) {
-                console.log(response);
-                $scope.state.loading = false;
-                errorCode = parseInt(reponse.data);
+                errorCode = parseInt(response.data);
                 if (errorCode === 0) {
                     $.Notify({
                         caption: 'Success',
                         content: 'Logged into local server.',
                         type: 'success'
                     });
-                    $scope.state.authenticated = 'server';
+                    $scope.state.authenticated = true;
                 }
                 else if (errorCode === -1 || errorCode === -2) {
                     $.Notify({
@@ -28,7 +26,7 @@ flame.controller('authController', ['$scope', '$http', '$location', function ($s
                         content: 'Locally authenticated, login server may be unavailable.',
                         type: 'warning'
                     });
-                    $scope.state.authenticated = 'local';
+                    $scope.state.authenticated = true;
                 }
                 else {
                     $.Notify({
@@ -38,20 +36,26 @@ flame.controller('authController', ['$scope', '$http', '$location', function ($s
                     });
                 }
 
-                if (['server', 'local'].includes($scope.state.authenticated)) {
-                    $location.path('conversations');
+                if ($scope.state.authenticated) {
+                    afterAuthenticate();
                 }
+                $scope.state.loading = false;
             },
             function fail(response) {
-                console.log(response);
-                $scope.state.loading = false;
                 $.Notify({
                     caption: 'Error',
                     content: 'Unable to authenticate, local server does not have an authentication source.',
                     type: 'alert'
                 });
+                $scope.state.loading = false;
             }
         );
+    };
+
+    var afterAuthenticate = function() {
+        $scope.goto('conversations');
+        $scope.streamConnect();
+        $scope.startCycles();
     };
 
     $scope.login = {};

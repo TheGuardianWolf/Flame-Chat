@@ -44,6 +44,7 @@ class SecureService(object):
         return RSA.importKey(key).encrypt(raw)
 
     def serverEncrypt(self, raw):
+        raw = str(raw)
         raw += Globals.serverAESPadding * (Globals.serverAESBlockSize - (len(raw) % Globals.serverAESBlockSize))
         iv = Random.new().read(16)
         cipher = AES.new(Globals.serverKey, AES.MODE_CBC, iv)
@@ -53,4 +54,4 @@ class SecureService(object):
         enc = unhexlify(enc)
         iv = enc[:16]
         cipher = AES.new(Globals.serverAESPadding, AES.MODE_CBC, iv)
-        return cipher.decrypt(enc[16:]).rstrip(Globals.serverAESPadding)
+        return unicode(cipher.decrypt(enc[16:]).rstrip(Globals.serverAESPadding))

@@ -4,13 +4,14 @@ from json import loads, dumps
 from binascii import hexlify
 from os import path
 from app import Globals
+from app.Controllers import __Controller
 from app.Models.AuthModel import Auth
 from app.Models.MessageModel import Message
 from app.Models.UserModel import User
 from app.Models.ProfileModel import Profile
 from app.Models.FileModel import File
 
-class PublicController(object):
+class PublicController(__Controller):
     _cp_config = {
         'tools.sessions.on': False
     }
@@ -20,14 +21,14 @@ class PublicController(object):
     hashing = ['0', '1', '2', '3', '4']
 
     def __init__(self, services):
-        self.LS = services['LoginService']
-        self.SS = services['SecureService']
-        self.RS = services['RestfulService']
-        self.DS = services['DatabaseService']
-        self.MS = services['MemoryService']
+        super(PublicController, self).__init__(services)
 
         f = open(path.join(Globals.appConfigRoot, 'publicAPI.json'))
         self.apiList = loads(f.read())
+        f.close()
+
+        f = open(path.join(Globals.appConfigRoot, 'blacklist.json'))
+        self.blacklist = loads(f.read())
         f.close()
 
     def __userFilter(self, ip):

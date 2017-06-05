@@ -1,0 +1,29 @@
+<div class="profile wrapper">
+    <div class="icon">
+        <img src=""/>
+    </div>
+    <div class="name">
+        <label for="fullname">Full Name</label>
+        <input type="text" name="fullname"></input>
+    </div>
+    <div class="username">
+        <label for="username">Username</label>
+        <input type="text" name="username"></input>
+    </div>
+    <div class="position">
+        <label for="position">Position</label>
+        <input type="text" name="position"></input>
+    </div>
+    <div class="description">
+        <label for="description">Description</label>
+        <input type="text" name="description"></input>
+    </div>
+    <div class="location">
+        <label for="location">Location</label>
+        <input type="text" name="location"></input>
+    </div>
+    <div class="icon-url">
+        <label for="iconUrl">Icon URL</label>
+        <input type="text" name="iconUrl"></input>
+    </div>
+</div>

@@ -1,21 +1,13 @@
 import cherrypy
 from datetime import datetime
-from time import sleep
 from binascii import hexlify
+from time import sleep
 from app import Globals
+from app.Controllers import __Controller
 from app.Models.AuthModel import Auth
 
-class AuthController(object):
+class AuthController(__Controller):
     def __init__(self, services):
-        self.LS = services['LoginService']
-        self.SS = services['SecureService']
-        self.RS = services['RestfulService']
-        self.DS = services['DatabaseService']
-
-    def __isAuthenticated(self):
-        if ('authenticated' not in cherrypy.session or cherrypy.session['authenticated'] == False):
-            return False
-        return True
 
     def __localAuth(self, username, passhash):
         auth = self.DS.select(Auth, 'username=' + username)
@@ -42,7 +34,7 @@ class AuthController(object):
 
         if enc > 0:
             for key in payload.keys():
-                payload[key] = self.SS.serverEncrypt(unicode(payload[key], 'utf-8', 'replace'))
+                payload[key] = self.SS.serverEncrypt(payload[key])
 
             payload['enc'] = 1
 
@@ -62,7 +54,7 @@ class AuthController(object):
         else:
             return (-2, 'Request error ' + str(status) + ': Login server authentication not available.')
 
-    def __dynamicAuth(self, username, passhash, enc=1):
+    def dynamicAuth(self, username, passhash, enc=1):
         if (self.LS.loginServerStatus()):
             (errorCode, errorMessage) = self.__loginServerAuth(username, passhash)
 
@@ -79,6 +71,13 @@ class AuthController(object):
         else:
             (errorCode, errorMessage) = self.__localAuth(username, passhash)
             errorMessage += ' Login server offline or unreachable.'
+
+        if cherrypy.session['authenticated'] == True:
+            try:
+                if (self.MS.data['authenticatedUsers'].count(username) == 0):
+                    self.MS.data['authenticatedUsers'].append(username)
+            except KeyError:
+                self.MS.data['authenticatedUsers'] = [username]
             
         cherrypy.session['lastLoginReportTime'] = datetime.now()
         return (errorCode, errorMessage)
@@ -97,11 +96,12 @@ class AuthController(object):
     def stream(self):
         if (cherrypy.request.remote.ip != '127.0.0.1'):
             raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
-        if not self.__isAuthenticated():
+        if not self.isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 
         cherrypy.response.stream = True
         cherrypy.response.headers['Content-Type'] = 'text/event-stream'
+        cherrypy.response.headers['Cache-Control'] = 'no-cache'
         errorCode = '-1'
         
         username = cherrypy.session['username']
@@ -109,19 +109,14 @@ class AuthController(object):
 
         cherrypy.session.release_lock()
 
+
         def content():
             while True:
-                #if (datetime.now() - cherrypy.session['lastLoginReportTime']).seconds > 40:
-                (errorCode, errorMessage) = self.__dynamicAuth(username, passhash)
+                (errorCode, errorMessage) = self.dynamicAuth(username, passhash)
                 yield str(errorCode) + errorMessage + '\n\n'
-                sleep(40)
-        
+                sleep(40)  
+                  
         return content()
-
-    #stream._cp_config = {
-    #    'response.stream': True, 
-    #    'tools.sessions.locking': 'explicit'
-    #}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -140,6 +135,6 @@ class AuthController(object):
         username = request['username']
         password = request['password']
         passhash = self.LS.hashPassword(password)
-        (errorCode, errorMessage) = self.__dynamicAuth(username, passhash)
+        (errorCode, errorMessage) = self.dynamicAuth(username, passhash)
         cherrypy.response.headers['Content-Type'] = 'text/plain'
-        return unicode(errorCode)
+        return unicode(errorCode).encode('utf-8', 'replace')

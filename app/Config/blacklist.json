@@ -1,0 +1,10 @@
+[
+    {
+        "entry": "testUser",
+        "type": "username"
+    },
+    {
+        "entry": "9.9.9.9",
+        "type": "ip"
+    }
+]

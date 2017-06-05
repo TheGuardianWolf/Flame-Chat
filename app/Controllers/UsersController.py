@@ -4,19 +4,11 @@ from app import Globals
 from app.Models.UserModel import User
 from json import loads, dumps
 
-class UsersController(object):
+class UsersController(__Controller):
     def __init__(self, services):
-        self.LS = services['LoginService']
-        self.SS = services['SecureService']
-        self.RS = services['RestfulService']
-        self.DS = services['DatabaseService']
-
-    def __isAuthenticated(self):
-        if ('authenticated' not in cherrypy.session or cherrypy.session['authenticated'] == False):
-            return False
-        return True
+         super(UsersController, self).__init__(services)
     
-    def __updateUsersTable(self, userList):
+    def updateTable(self, userList):
         conditionList = []
         for user in userList:
             conditionList.append('username=' + self.DS.queryFormat(user.username))
@@ -40,19 +32,19 @@ class UsersController(object):
         self.DS.insertMany(insertions)
         self.DS.updateMany(updates, updatesConditions)
 
-    def __refreshActiveServerUsers(self, enc=1):
-        if not self.__isAuthenticated():
-            raise cherrypy.HTTPError(403, 'User not authenticated')
+    def __refreshActivePeerUsers(self):
+        raise NotImplementedError('Pure P2P mode not implemented')
 
+    def __refreshActiveServerUsers(self, username, passhash, enc=1):
         payload = {
-            'username': cherrypy.session['username'],
-            'password': cherrypy.session['passhash'],
+            'username': username,
+            'password': passhash,
             'json': 1
         }
 
         if enc > 0:
             for key in payload.keys():
-                payload[key] = self.SS.serverEncrypt(unicode(payload[key], 'utf-8', 'replace'))
+                payload[key] = self.SS.serverEncrypt(payload[key])
             payload['enc'] = 1
 
         (status, response) = self.RS.get(Globals.loginRoot, '/getList', payload)
@@ -62,12 +54,12 @@ class UsersController(object):
             try:
                 json = loads(responseText)
             except ValueError:
-                (errorCode, errorText) = responseText.split(',')
+                (errorCode, errorMessage) = responseText.split(',')
 
                 errorCode = int(errorCode)
 
                 if errorCode == 6 and payload['enc'] == 1:
-                    (errorCode, errorMessage) = self.__refreshActiveServerUsers(enc=0)
+                    (errorCode, errorMessage) = self.__refreshActiveServerUsers(username, passhash, enc=0)
                     errorCode = int(errorCode)
 
                 return (errorCode, errorMessage)
@@ -78,56 +70,56 @@ class UsersController(object):
                 userArgs = []
                 userList.append(User.deserialize(userObj))
 
-            self.__updateUsersTable(userList)
-            self.activeUserList = userList
+            self.updateTable(userList)
+            self.MS.data['activeUsers'] = userList
+
             return (0, 'Successfully retrieved active user list from login server.')
             
         else:
-            self.lastUserListRefresh = datetime.now()
+            self.MS.data['lastUserListRefresh'] = datetime.now()
             return (-2, 'Request error ' + str(status) + ': Login server user list not available.')
 
-    def __dynamicRefreshActiveUsers(self):
+    def dynamicRefreshActiveUsers(self, username, passhash):
         if self.LS.online:
-            (errorCode, errorMessage) = self.__refreshActiveServerUsers()
-            if errorCode == -2:
-                (errorCode, errorMessage) = self.__refreshActivePeerUsers()
-                errorMessage += ' Request to login server failed with unhandled error.'
+            (errorCode, errorMessage) = self.__refreshActiveServerUsers(username, passhash)
         else:
-            (errorCode, errorMessage) = self.__refreshActivePeerUsers()
-            errorMessage += ' Login server offline or unreachable.'
+            errorCode = -2
+            errorMessage = 'Login server is offline.'
             
-        self.lastUserListRefresh = datetime.now()
+        self.MS.data['lastUserListRefresh'] = datetime.now()
         return (errorCode, errorMessage)
 
-    #@cherrypy.expose
-    #def stream(self):
-    #    if not self.__isAuthenticated():
-    #        raise cherrypy.HTTPError(403, 'User not authenticated')
-
-    #    cherrypy.response.headers['Content-Type'] = 'text/event-stream;charset=utf-8'
-
-    #    if (datetime.now() - self.lastUserListRefresh.seconds) > 10:
-    #        lastActiveUsers = self.activeUserList
-    #        (errorCode, errorMessage) = self.__dynamicRefreshActiveUsers()
-
-    #    return '\n\n'
+    # Call remote peer getList
+    def userInfoQuery(self):
+        pass
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get(self):
-        if not self.__isAuthenticated():
+        if not self.isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 
-        #if (datetime.now() - self.lastUserListRefresh).seconds > 10:
-        self.__dynamicRefreshActiveUsers()
+        try:
+            streamEnabled = cherrypy.session['streamEnabled']
+        except KeyError:
+            streamEnabled = False
+
+        if not streamEnabled:
+            if self.checkTiming(self.MS.data, 'lastUserListRefresh', 10):
+                self.dynamicRefreshActiveUsers(cherrypy.session['username'], cherrypy.session['passhash'])
+            if self.checkTiming(self.MS.data, 'lastUserInfoQuery', 10):
+                self.queryActiveUsers()
 
         userObjs = []
 
-        for user in self.activeUserList:
+        try:
+            activeUsers = self.MS.data['activeUsers']
+        except KeyError:
+            activeUsers = []
+
+        for user in activeUsers:
             userObjs.append(user.serialize())
 
-        #json = dumps(userObjs)
-        #cherrypy.response.headers['Content-Type'] = 'application/json'
         return userObjs
 
 
