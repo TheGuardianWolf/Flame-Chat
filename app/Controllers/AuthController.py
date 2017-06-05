@@ -129,7 +129,7 @@ class AuthController(__Controller):
         except AttributeError:
             raise cherrypy.HTTPError(400, 'JSON payload not sent.')
 
-        if not self.RS.checkObjectKeys(request, ['username', 'password']):
+        if not self.checkObjectKeys(request, ['username', 'password']):
             raise cherrypy.HTTPError(400, 'Missing required parameters.')
         
         username = request['username']

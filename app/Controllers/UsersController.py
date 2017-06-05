@@ -108,7 +108,7 @@ class UsersController(__Controller):
             if self.checkTiming(self.MS.data, 'lastUserListRefresh', 10):
                 self.dynamicRefreshActiveUsers(cherrypy.session['username'], cherrypy.session['passhash'])
             if self.checkTiming(self.MS.data, 'lastUserInfoQuery', 10):
-                self.queryActiveUsers()
+                self.userInfoQuery()
 
         userObjs = []
 

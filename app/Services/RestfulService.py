@@ -4,15 +4,6 @@ from urllib2 import urlopen, HTTPError, URLError
 from httplib import HTTPException
 
 class RestfulService(object):
-    def checkObjectKeys(self, obj, keys):
-        for key in keys:
-            try:
-                if obj[key] == None:
-                    return False
-            except KeyError:
-                return False
-        return True
-
     def get(self, url, endpoint, payload=None):
         try:
             requestUrl = url + endpoint

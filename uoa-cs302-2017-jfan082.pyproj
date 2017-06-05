@@ -22,6 +22,7 @@
   <ItemGroup>
     <Compile Include="app\Controllers\AuthController.py" />
     <Compile Include="app\Controllers\FilesController.py" />
+    <Compile Include="app\Controllers\StatusController.py" />
     <Compile Include="app\Controllers\ProfilesController.py">
       <SubType>Code</SubType>
     </Compile>

@@ -18,7 +18,16 @@ class __Controller(object):
         except KeyError:
             return False
 
-    def checkTiming(object, key, assertSecondsPassed):
+    def checkTiming(self, object, key, assertSecondsPassed):
         if key not in object or (datetime.now() - object[key]).seconds >= assertSecondsPassed:
             return True
         return False
+
+    def checkObjectKeys(self, obj, keys):
+        for key in keys:
+            try:
+                if obj[key] == None:
+                    return False
+            except KeyError:
+                return False
+        return True

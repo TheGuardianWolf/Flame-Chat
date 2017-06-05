@@ -2,29 +2,21 @@ import cherrypy
 from datetime import datetime
 from app import Globals
 from app.Controllers import __Controller
-from app.Models.UserModel import User
 from json import loads, dumps
 
-class MessagesController(__Controller):
+class StatusController(__Controller):
     def __init__(self, services):
-        super(MessagesController, self).__init__(services)
+         super(ProfilesController, self).__init__(services)
+
+    # Call remote peer getStatus
+    def userStatusQuery(self):
+        pass
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get(self, since=None):
+    def get(self):
         if not self.isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
-
-        self.__dynamicRefreshActiveUsers()
-
-        userObjs = []
-
-        for user in self.activeUserList:
-            userObjs.append(user.serialize())
-
-        json = dumps(userObjs)
-        cherrypy.response.headers['Content-Type'] = 'application/json'
-        return json
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -37,5 +29,5 @@ class MessagesController(__Controller):
         except AttributeError:
             raise cherrypy.HTTPError(400, 'JSON payload not sent.')
 
-        if not self.checkObjectKeys(request, ['destination', 'message']):
+        if not self.checkObjectKeys(request, ['status']):
             raise cherrypy.HTTPError(400, 'Missing required parameters.')

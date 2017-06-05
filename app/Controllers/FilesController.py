@@ -37,5 +37,5 @@ class FilesController(__Controller):
         except AttributeError:
             raise cherrypy.HTTPError(400, 'JSON payload not sent.')
 
-        if not self.RS.checkObjectKeys(request, ['destination', 'file', 'filename', 'mimetype']):
+        if not self.checkObjectKeys(request, ['destination', 'file', 'filename', 'mimetype']):
             raise cherrypy.HTTPError(400, 'Missing required parameters.')

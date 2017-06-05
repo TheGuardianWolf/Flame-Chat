@@ -12,6 +12,7 @@ class StreamController(object):
         self.__auth = controllers['AuthController']
         self.__users = controllers['UsersController']
         self.__profiles = controllers['ProfilesController']
+        self.__status = controllers['StatusController']
 
         # Setup loop here to run tasks
 
@@ -26,6 +27,9 @@ class StreamController(object):
 
         if self.checkTiming(memoryData, 'lastUserInfoQuery', 10):
             self.__users.userInfoQuery()
+
+        if self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
+            self.__status.userStatusQuery()
 
         if self.checkTiming(memoryData, 'lastUserProfileQuery', 10):
             self.__profiles.userProfileQuery()

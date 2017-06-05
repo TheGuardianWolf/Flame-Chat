@@ -66,7 +66,7 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.RS.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'stamp']):
+        if not self.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'stamp']):
             return '1'
 
         request['encoding'] = unicode(encoding)
@@ -89,7 +89,7 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.RS.checkObjectKeys(self, request, ['sender', 'profile_username']):
+        if not self.checkObjectKeys(self, request, ['sender', 'profile_username']):
             return '1'
 
         responseObj = {}
@@ -108,7 +108,7 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.RS.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'encryption']):
+        if not self.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'encryption']):
             return '1'
 
         if self.encryption.count(str(request['encryption'])) == 0:
@@ -167,7 +167,7 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.RS.checkObjectKeys(self, request, ['sender', 'destination', 'file', 'filename', 'content_type', 'stamp', 'hashing']):
+        if not self.checkObjectKeys(self, request, ['sender', 'destination', 'file', 'filename', 'content_type', 'stamp', 'hashing']):
             return '1'
 
         request['encoding'] = unicode(encoding)
@@ -187,7 +187,7 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.RS.checkObjectKeys(self, request, ['requestor']):
+        if not self.checkObjectKeys(self, request, ['requestor']):
             return '1'
 
         try:
@@ -215,14 +215,14 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.RS.checkObjectKeys(self, request, ['profile_username']):
+        if not self.checkObjectKeys(self, request, ['profile_username']):
             return '1'
 
         responseObj = {}
 
         try:
-            if self.MS.data['activeUsers'].count(request['profile_username']) > 0:
-                responseObj['status'] = self.MS.data['activeUsers'][profile_username]['status']
+            if request['profile_username'] in self.MS.data['userStatus']:
+                responseObj['status'] = self.MS.data['userStatus'][request['profile_username']]['status']
             else:
                 return '3'
         except KeyError:
