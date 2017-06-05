@@ -4,7 +4,6 @@ class Message(__Model):
     tableName = 'messages'
     tableSchema = [
         ('id', 'integer primary key'),
-        ('messageId', 'text'),
         ('sender', 'text'),
         ('destination', 'text'),
         ('message', 'text'),

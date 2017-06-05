@@ -7,18 +7,16 @@ from app import Globals
 from app.Controllers.__Controller import __Controller
 from app.Models.AuthModel import Auth
 from app.Models.MessageModel import Message
+from app.Models.MessageMetaModel import MessageMeta
 from app.Models.UserModel import User
 from app.Models.ProfileModel import Profile
 from app.Models.FileModel import File
+from app.Models.FileMetaModel import FileMeta
 
 class PublicController(__Controller):
     _cp_config = {
         'tools.sessions.on': False
     }
-
-    encoding = ['0', '2']
-    encryption = ['0', '3', '4']
-    hashing = ['0', '1', '2', '3', '4']
 
     def __init__(self, services):
         super(PublicController, self).__init__(services)
@@ -45,9 +43,9 @@ class PublicController(__Controller):
 
         output = [
             '\n'.join(self.apiList),
-            'Encoding ' + ' '.join(self.encoding),
-            'Encryption ' + ' '.join(self.encryption),
-            'Hashing ' + ' '.join(self.hashing)
+            'Encoding ' + ' '.join(Globals.standards.encoding),
+            'Encryption ' + ' '.join(Globals.standards.encryption),
+            'Hashing ' + ' '.join(Globals.standards.hashing)
         ]
 
         return '\n'.join(output)
@@ -71,9 +69,17 @@ class PublicController(__Controller):
 
         request['encoding'] = unicode(encoding)
 
+        recievedTime = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+
         msg = Message.deserialize(request)
 
-        self.DS.insert(msg)
+        msgId = self.DS.insert(msg)
+
+        msgMetaTime = MessageMeta(None, msgId, 'recievedTime', recievedTime)
+        msgMetaStatus = MessageMeta(None, msgId, 'relayStatus', 'new')
+
+        self.DS.insertMany([msgMeta, msgMetaStatus])
+
         return '0'
         
     @cherrypy.tools.json_in()
@@ -111,7 +117,7 @@ class PublicController(__Controller):
         if not self.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'encryption']):
             return '1'
 
-        if self.encryption.count(str(request['encryption'])) == 0:
+        if Globals.standards.encryption.count(str(request['encryption'])) == 0:
             return '9'
 
         responseObj = {}
@@ -151,7 +157,7 @@ class PublicController(__Controller):
             encProfileObj = {}
             try:
                 for key, value in profileObj.items():
-                    encProfileObj[key] = self.SS.encryptWithKey(user.publicKey, unicode(value).encode('ascii', errors='replace'))
+                    encProfileObj[key] = self.SS.encrypt(unicode(value).encode('ascii', errors='replace'), '3', key=user.publicKey)
                 encProfileObj['encryption'] = 3
                 return dumps(profileObj)
             except ValueError:

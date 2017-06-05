@@ -2,6 +2,7 @@ from app import Globals
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto import Random
+import hashlib
 from binascii import hexlify, unhexlify
 
 class SecureService(object):
@@ -40,8 +41,36 @@ class SecureService(object):
             privateFile.close()
             print 'Created new public key at ' + Globals.publicKeyPath
 
-    def encryptWithKey(self, key, raw):
-        return RSA.importKey(key).encrypt(raw)
+    def hash(self, raw, standard):
+        standard = unicode(standard)
+
+        if standard not in Globals.standards.hashing:
+            raise ValueError('Standard unsupported')
+        m = getattr(hashlib, hashMethod)
+        m.update(str(raw))
+        return m.hexdigest()
+
+    def decrypt(self, enc, standard):
+        standard = unicode(standard)
+
+        if standard not in Globals.standards.encryption:
+            raise ValueError('Standard unsupported')
+
+        if standard == '3':
+            return unicode(self.privateKey.decrypt(enc))
+
+    def encrypt(self, raw, standard, key=None):
+        standard = unicode(standard)
+
+        if standard not in Globals.standards.encryption:
+            raise ValueError('Standard unsupported')
+
+        if standard == '3':
+            if key is None:
+                raise TypeError('Key cannot be NoneType for this standard.')
+            if len(raw) > 128:
+                raise ValueError('Size of raw is bigger than 128 bytes')
+            return unicode(RSA.importKey(key).encrypt(raw))
 
     def serverEncrypt(self, raw):
         raw = str(raw)

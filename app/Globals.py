@@ -25,3 +25,10 @@ serverAESPadding = ' '
 
 # Values for data/storage
 dbPath = os.path.join(appRoot, 'data', 'entity.db')
+
+# Values for standards support
+standards = {
+    'encoding': ['0', '2'],
+    'encryption': ['0', '3', '4'],
+    'hashing': ['0', '1', '2', '3', '4']
+}

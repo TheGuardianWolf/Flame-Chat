@@ -16,6 +16,9 @@ class StreamController(object):
 
         # Setup loop here to run tasks
 
+    def contentPush(self, user=None):
+        pass
+
     def upkeep(self, sessionData):
         memoryData = self.DS.data
 
@@ -33,6 +36,9 @@ class StreamController(object):
 
         if self.checkTiming(memoryData, 'lastUserProfileQuery', 10):
             self.__profiles.userProfileQuery()
+
+        if len(self.MS.data['pushRequests']) > 0:
+
 
     @cherrypy.expose
     def index(self):

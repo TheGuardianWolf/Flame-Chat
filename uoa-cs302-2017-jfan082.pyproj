@@ -43,11 +43,12 @@
     <Compile Include="app\Globals.py" />
     <Compile Include="app\Models\AuthModel.py" />
     <Compile Include="app\Models\FileModel.py" />
+    <Compile Include="app\Models\FileMetaModel.py" />
     <Compile Include="app\Models\ProfileModel.py" />
     <Compile Include="app\Models\MessageModel.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="app\Models\UserMetaModel.py" />
+    <Compile Include="app\Models\MessageMetaModel.py" />
     <Compile Include="app\Models\UserModel.py" />
     <Compile Include="app\Models\__init__.py">
       <SubType>Code</SubType>

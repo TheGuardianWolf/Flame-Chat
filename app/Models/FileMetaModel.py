@@ -1,10 +1,10 @@
 from app.Models.__Model import __Model
 
-class UserMeta(__Model):
-    tableName = 'userMeta'
+class FileMeta(__Model):
+    tableName = 'fileMeta'
     tableSchema = [
         ('id', 'integer primary key'),
-        ('userId', 'integer'),
+        ('fileId', 'integer'),
         ('key', 'text'),
         ('value', 'text')
     ]
