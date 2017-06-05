@@ -3,11 +3,12 @@ from datetime import datetime
 from binascii import hexlify
 from time import sleep
 from app import Globals
-from app.Controllers import __Controller
+from app.Controllers.__Controller import __Controller
 from app.Models.AuthModel import Auth
 
 class AuthController(__Controller):
     def __init__(self, services):
+        super(AuthController, self).__init__(services)
 
     def __localAuth(self, username, passhash):
         auth = self.DS.select(Auth, 'username=' + username)

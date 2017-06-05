@@ -4,7 +4,7 @@ from json import loads, dumps
 from binascii import hexlify
 from os import path
 from app import Globals
-from app.Controllers import __Controller
+from app.Controllers.__Controller import __Controller
 from app.Models.AuthModel import Auth
 from app.Models.MessageModel import Message
 from app.Models.UserModel import User
@@ -222,7 +222,7 @@ class PublicController(__Controller):
 
         try:
             if request['profile_username'] in self.MS.data['userStatus']:
-                responseObj['status'] = self.MS.data['userStatus'][request['profile_username']]['status']
+                responseObj['status'] = self.MS.data['userStatus'][request['profile_username']]
             else:
                 return '3'
         except KeyError:

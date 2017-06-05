@@ -1,7 +1,7 @@
 import cherrypy
 from datetime import datetime
 from app import Globals
-from app.Controllers import __Controller
+from app.Controllers.__Controller import __Controller
 from app.Models.FileModel import File
 from json import loads, dumps
 
