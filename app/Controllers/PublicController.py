@@ -167,7 +167,7 @@ class PublicController(__Controller):
     
     @cherrypy.tools.json_in()
     @cherrypy.expose
-    def recieveFile(self, encoding):
+    def recieveFile(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
             return '6'
 
@@ -176,11 +176,15 @@ class PublicController(__Controller):
         if not self.checkObjectKeys(self, request, ['sender', 'destination', 'file', 'filename', 'content_type', 'stamp', 'hashing']):
             return '1'
 
-        request['encoding'] = unicode(encoding)
-
         f = File.deserialize(request)
 
-        self.DS.insert(f)
+        fId = self.DS.insert(f)
+
+        fMetaTime = FileMeta(None, fID, 'recievedTime', recievedTime)
+        fMetaStatus = FileMeta(None, fId, 'relayStatus', 'unsent')
+
+        self.DS.insertMany(fMetaTime + fMetaStatus)
+
         return '0'
 
     @cherrypy.tools.json_in()
