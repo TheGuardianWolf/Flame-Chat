@@ -8,6 +8,7 @@ class LoginService(object):
     def __init__(self):
         self.online = True
         self.ip = None
+        self.location = None
 
     def __getExternalIP(self):
         return urlopen('http://ip.42.pl/raw').read()
@@ -48,12 +49,15 @@ class LoginService(object):
             
             if (currIntIPArr[0], currIntIPArr[1]) == (desktopIntIPArr[0], desktopIntIPArr[1]):
                 self.ip = currIntIP
+                self.location = 0
                 return (0, currIntIP)
             elif (currIntIPArr[0], currIntIPArr[1]) == (wifiIntIPArr[0], wifiIntIPArr[1]):
                 self.ip = extIp
+                self.location = 1
                 return (1, extIP)
 
         self.ip = extIP
+        self.location = 2
         return (2, extIP)
 
     def hashPassword(self, password):

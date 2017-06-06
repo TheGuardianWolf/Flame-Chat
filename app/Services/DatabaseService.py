@@ -30,7 +30,7 @@ class DatabaseService(object):
                 except AttributeError:
                     print "Warning: " + str(model) + " does not have an associated table in the database."
                     continue
-                queries.append(' '.join([command, table, self.__bracketJoin(',', values)]))
+                queries.append(' '.join([command, table, self.bracketJoin(',', values)]))
             self.queryMany(queries)
             print 'Created new database at ' + self.dbPath
         else:
@@ -44,7 +44,7 @@ class DatabaseService(object):
         else:
             return unicode(item)
 
-    def __bracketJoin(self, joint, list):
+    def bracketJoin(self, joint, list):
         return '(' + joint.join(list) + ')'
 
     def queryMany(self, queries, fetch=False):
@@ -86,9 +86,9 @@ class DatabaseService(object):
                 [
                     command, 
                     modelList[i].tableName, 
-                    self.__bracketJoin(',', entryNames), 
+                    self.bracketJoin(',', entryNames), 
                     'VALUES', 
-                    self.__bracketJoin(',', entryValues)
+                    self.bracketJoin(',', entryValues)
                 ]
             ))
         return self.queryMany(queries)
@@ -170,4 +170,3 @@ class DatabaseService(object):
             return self.updateMany([model])[0]
         except IndexError:
             return None
-
