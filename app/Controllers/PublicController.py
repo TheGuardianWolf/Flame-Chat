@@ -43,7 +43,7 @@ class PublicController(__Controller):
 
         output = [
             '\n'.join(self.apiList),
-            'Encoding ' + ' '.join(Globals.standards.encoding),
+            #'Encoding ' + ' '.join(Globals.standards.encoding),
             'Encryption ' + ' '.join(Globals.standards.encryption),
             'Hashing ' + ' '.join(Globals.standards.hashing)
         ]
@@ -58,7 +58,7 @@ class PublicController(__Controller):
 
     @cherrypy.tools.json_in()
     @cherrypy.expose
-    def recieveMessage(self, encoding='0'):
+    def recieveMessage(self):#, encoding='0'):
         if not self.__userFilter(cherrypy.request.remote.ip):
             return '6'
 
@@ -67,7 +67,7 @@ class PublicController(__Controller):
         if not self.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'stamp']):
             return '1'
 
-        request['encoding'] = unicode(encoding)
+        #request['encoding'] = unicode(encoding)
 
         recievedTime = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
 
@@ -76,7 +76,7 @@ class PublicController(__Controller):
         msgId = self.DS.insert(msg)
 
         msgMetaTime = MessageMeta(None, msgId, 'recievedTime', recievedTime)
-        msgMetaStatus = MessageMeta(None, msgId, 'relayStatus', 'unsent')
+        msgMetaStatus = MessageMeta(None, msgId, 'relayAction', 'unsent')
 
         self.DS.insertMany(msgMetaTime + msgMetaStatus)
 
@@ -149,7 +149,7 @@ class PublicController(__Controller):
         profileObj = profile.serialize()
         del profileObj['id']
         del profileObj['userId']
-        profileObj['encoding'] = 0
+        #profileObj['encoding'] = 0
 
         cherrypy.response.headers['Content-Type'] = 'application/json'
          
@@ -157,7 +157,7 @@ class PublicController(__Controller):
             encProfileObj = {}
             try:
                 for key, value in profileObj.items():
-                    encProfileObj[key] = self.SS.encrypt(unicode(value).encode('ascii', errors='replace'), '3', key=user.publicKey)
+                    encProfileObj[key] = self.SS.encrypt(unicode(value), '3', key=user.publicKey)
                 encProfileObj['encryption'] = 3
                 return dumps(profileObj)
             except ValueError:
@@ -181,7 +181,7 @@ class PublicController(__Controller):
         fId = self.DS.insert(f)
 
         fMetaTime = FileMeta(None, fID, 'recievedTime', recievedTime)
-        fMetaStatus = FileMeta(None, fId, 'relayStatus', 'unsent')
+        fMetaStatus = FileMeta(None, fId, 'relayAction', 'unsent')
 
         self.DS.insertMany(fMetaTime + fMetaStatus)
 

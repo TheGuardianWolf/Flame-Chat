@@ -12,7 +12,7 @@ from binascii import unhexlify
 class MessagesController(__Controller):
     def __init__(self, services):
         super(MessagesController, self).__init__(services)
-        self.noEncrypt = ['sender', 'destination', 'encryption', 'encoding']
+        self.noEncrypt = ['sender', 'destination', 'encryption']#, 'encoding']
 
     def decodeMessage(self, msg, encoding):
         if str(encoding) == '0':
@@ -97,9 +97,9 @@ class MessagesController(__Controller):
         for i in range(0, len(q)):
             inbound = q[i].destination == username
             try:
-                # Check encoding
-                if str(q[i].encoding) in Globals.standards.encoding:
-                    raise ValueError('Encoding not supported')
+                ## Check encoding
+                #if str(q[i].encoding) in Globals.standards.encoding:
+                #    raise ValueError('Encoding not supported')
 
                 # Decrypt if encrypted
                 if int(q[i].encryption) > 0:
@@ -107,8 +107,8 @@ class MessagesController(__Controller):
                         if entryName not in self.noEncrypt:
                             self.SS.decrypt(getattr(q[i], entryName), q[i].encryption)
 
-                # Unencode
-                q[i].message = self.decodeMessage(q[i].message, q[i].encoding)
+                ## Unencode
+                #q[i].message = self.decodeMessage(q[i].message, q[i].encoding)
 
                 # Run checks on inbound messages
                 if inbound:
@@ -126,8 +126,8 @@ class MessagesController(__Controller):
                     if (q[i].destination == username):
                         markReadQueue.append(q[i])
 
-                # Encode utf-8 for local transmission
-                q[i].message = self.encodeMessage(q[i].message, '2')
+                ## Encode utf-8 for local transmission
+                #q[i].message = self.encodeMessage(q[i].message, '2')
 
                 # Store object to be returned
                 returnObj.append(q[i].serialize()) 
@@ -141,9 +141,9 @@ class MessagesController(__Controller):
             for msg in markReadQueue:
                 q = self.DS.select(MessageMeta, 'messageId=' + self.DS.queryFormat(msg.id) + ' AND key=\'relayStatus\'')
                 if len(q) > 0:
-                    updateList.append(MessageMeta(q[0].id, msg.id, 'relayStatus', 'sent'))
+                    updateList.append(MessageMeta(q[0].id, msg.id, 'relayAction', 'sent'))
                 else:
-                    insertList.append(MessageMeta(None, msg.id, 'relayStatus', 'sent'))
+                    insertList.append(MessageMeta(None, msg.id, 'relayAction', 'sent'))
             if len(updateList) > 0:
                 self.DS.updateMany(updateList)
             if len(insertList) > 0:
@@ -199,13 +199,13 @@ class MessagesController(__Controller):
                 # Assume we already sorted the values in the db on entry
                 standard = {
                     'encryption': standards.encryption[-1],
-                    'encoding': standards.encoding[-1],
+                    #'encoding': standards.encoding[-1],
                     'hashing': standards.hashing[-1]
                 }
         except:
             standard = {
                 'encryption': '0',
-                'encoding': '0',
+                #'encoding': '0',
                 'hashing': '0'
             }
 
@@ -214,18 +214,18 @@ class MessagesController(__Controller):
             try:
                 user = self.DS.select(User, 'username=' + self.DS.queryFormat(destination))[0]
                 encryptionKey = user.publicKey
-                self.SS.encrypt('a', '3', key=unhexlify(encryptionKey))
+                self.SS.encrypt('a', '3', key=encryptionKey)
             except:
                 standard['encryption'] = '0'
 
-        rawMsg = request['message'].decode('utf-8', 'replace')
+        rawMsg = request['message']#.decode('utf-8', 'replace')
 
-        # Encode message
-        if int(standard['encryption']) == 3:
-            text = self.encodeMessage(rawMsg, '0')
-            standard['encoding'] = 0
-        else:
-            text = self.encodeMessage(rawMsg, standard['encoding'])
+        ## Encode message
+        #if int(standard['encryption']) == 3:
+        #    text = self.encodeMessage(rawMsg, '0')
+        #    standard['encoding'] = 0
+        #else:
+        #    text = self.encodeMessage(rawMsg, standard['encoding'])
 
         # Hash message
         hash = self.SS.hash(rawMsg, standard['hashing'])
@@ -238,7 +238,7 @@ class MessagesController(__Controller):
             text,
             request['stamp'],
             '0',
-            standard['encoding'],
+            #standard['encoding'],
             standard['encryption'],
             standard['hashing'],
             self.SS.hash(text),
@@ -256,7 +256,7 @@ class MessagesController(__Controller):
 
         # Generate message metadata for relay
         msgMetaTime = MessageMeta(None, msgId, 'recievedTime', recievedTime)
-        msgMetaStatus = MessageMeta(None, msgId, 'relayStatus', 'new')
+        msgMetaStatus = MessageMeta(None, msgId, 'relayAction', 'broadcast')
         self.DS.insertMany(msgMetaTime + msgMetaStatus)              
 
         msg = Message.deserialize(request)

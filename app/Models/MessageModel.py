@@ -9,7 +9,6 @@ class Message(__Model):
         ('message', 'text'),
         ('stamp', 'text'),
         ('markdown', 'text'),
-        ('encoding', 'text'),
         ('encryption', 'text'),
         ('hashing', 'text'),
         ('hash', 'text'),

@@ -28,7 +28,7 @@ dbPath = os.path.join(appRoot, 'data', 'entity.db')
 
 # Values for standards support
 standards = {
-    'encoding': ['0', '2'],
+    #'encoding': ['0', '2'],
     'encryption': ['0', '3'],
     'hashing': ['0', '1', '3']
 }

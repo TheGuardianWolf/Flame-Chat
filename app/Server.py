@@ -19,7 +19,8 @@ class Server(object):
             'server.socket_port': Globals.publicPort,
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
             'tools.sessions.on': True,
-            'tools.encode.encoding': 'utf-8'
+            'tools.encode.encoding': 'utf-8',
+            'tools.encode.on': True
         }
 
         self.staticConfig = {

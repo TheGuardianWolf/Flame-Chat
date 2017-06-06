@@ -152,13 +152,13 @@ class UsersController(__Controller):
                 standardsList = data[-3:]
                 try:
                     standards = {
-                        'encoding': sorted(list(set(standardsList[0]) & set(Globals.standards['encoding']))),
-                        'encryption': sorted(list(set(standardsList[1]) & set(Globals.standards['encryption']))),
-                        'hashing': sorted(list(set(standardsList[2]) & set(Globals.standards['hashing'])))
+                        #'encoding': sorted(list(set(standardsList[0]) & set(Globals.standards['encoding']))),
+                        'encryption': sorted(list(set(standardsList[0]) & set(Globals.standards['encryption']))),
+                        'hashing': sorted(list(set(standardsList[1]) & set(Globals.standards['hashing'])))
                     }
                 except:
                     standards = {
-                        'encoding': ['0'],
+                        #'encoding': ['0'],
                         'encryption': ['0'],
                         'hashing': ['0']
                     }
@@ -193,7 +193,7 @@ class UsersController(__Controller):
                     try:
                         localMessage = 'test'
                         payload = {
-                            'message': self.SS.encrypt(localMessage, testStandards[i], key=unhexlify(user.publicKey)),
+                            'message': self.SS.encrypt(localMessage, testStandards[i], key=user.publicKey),
                             'sender': 'username',
                             'destination': user.username,
                             'encryption': testStandards[i]

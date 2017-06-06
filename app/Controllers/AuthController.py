@@ -138,4 +138,4 @@ class AuthController(__Controller):
         passhash = self.LS.hashPassword(password)
         (errorCode, errorMessage) = self.dynamicAuth(username, passhash)
         cherrypy.response.headers['Content-Type'] = 'text/plain'
-        return unicode(errorCode).encode('utf-8', 'replace')
+        return unicode(errorCode)

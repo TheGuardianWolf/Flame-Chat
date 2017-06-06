@@ -43,7 +43,7 @@ class SecureService(object):
 
     def cmpHash(self, raw):
         m = hashlib.md5()
-        m.update(raw)
+        m.update(unicode(raw))
         return m.hexdigest()
 
     def hash(self, raw, standard):
@@ -70,10 +70,11 @@ class SecureService(object):
             raise ValueError('Standard unsupported')
 
         if standard == '3':
-            return unicode(self.privateKey.decrypt(enc))
+            return unicode(self.privateKey.decrypt(unhexlify(enc)))
 
     def encrypt(self, raw, standard, key=None):
         standard = unicode(standard)
+        raw = unicode(raw)
 
         if standard not in Globals.standards.encryption:
             raise ValueError('Standard unsupported')
@@ -83,14 +84,14 @@ class SecureService(object):
                 raise TypeError('Key cannot be NoneType for this standard.')
             if len(raw) > 128:
                 raise ValueError('Size of raw is bigger than 128 bytes')
-            return unicode(RSA.importKey(key).encrypt(raw))
+            return unicode(hexlify(RSA.importKey(key).encrypt(raw.encode('ascii', 'replace'))))
 
     def serverEncrypt(self, raw):
         raw = str(raw)
         raw += Globals.serverAESPadding * (Globals.serverAESBlockSize - (len(raw) % Globals.serverAESBlockSize))
         iv = Random.new().read(16)
         cipher = AES.new(Globals.serverKey, AES.MODE_CBC, iv)
-        return hexlify(iv + cipher.encrypt(raw))
+        return unicode(hexlify(iv + cipher.encrypt(raw)))
     
     def serverDecrypt(self, enc):
         enc = unhexlify(enc)
