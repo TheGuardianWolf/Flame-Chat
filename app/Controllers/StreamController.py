@@ -17,29 +17,35 @@ class StreamController(object):
 
         # Setup loop here to run tasks
 
-    def contentPush(self, user=None):
+    def contentPush(self):
         pass
 
     def upkeep(self, sessionData):
         memoryData = self.DS.data
 
+        if len(self.MS.data['pushRequests']) > 0:
+            self.contentPush()
+
         if self.checkTiming(sessionData, 'lastLoginReportTime', 10):
             self.__auth.dynamicAuth(sessionData['username'], sessionData['passhash'])
 
-        if self.checkTiming(memoryData, 'lastUserListRefresh', 10):
+        elif self.checkTiming(memoryData, 'lastUserListRefresh', 10):
             self.__users.dynamicRefreshActiveUsers(sessionData['username'], sessionData['passhash'])
 
-        if self.checkTiming(memoryData, 'lastUserInfoQuery', 10):
-            self.__users.userInfoQuery()
+        elif self.checkTiming(memoryData, 'lastUserInfoQuery', 10):
+            self.__users.userInfoQuery(sessionData['username'])
 
-        if self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
+        elif self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
             self.__status.userStatusQuery()
 
-        if self.checkTiming(memoryData, 'lastUserProfileQuery', 10):
+        elif self.checkTiming(memoryData, 'lastUserProfileQuery', 10):
             self.__profiles.userProfileQuery()
+        
+        elif self.checkTiming(memoryData, 'lastRelayMessageSend', 300):
+            self.__messages.relayMessageSend()
 
-        if len(self.MS.data['pushRequests']) > 0:
-            pass
+        elif self.checkTiming(memoryData, 'lastRelayFileSend', 300):
+            self.__files.relayFileSend()
 
 
     @cherrypy.expose

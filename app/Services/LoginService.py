@@ -42,7 +42,7 @@ class LoginService(object):
 
         if extIP == Globals.universityExternalIP:
             currIntIP = self.__getInternalIP()
-            currIntIPArr = intIP.split('.')
+            currIntIPArr = currIntIP.split('.')
 
             desktopIntIPArr = Globals.universityDesktop.split('.')
             wifiIntIPArr = Globals.universityWifi.split('.')
@@ -52,9 +52,9 @@ class LoginService(object):
                 self.location = 0
                 return (0, currIntIP)
             elif (currIntIPArr[0], currIntIPArr[1]) == (wifiIntIPArr[0], wifiIntIPArr[1]):
-                self.ip = extIp
+                self.ip = currIntIP
                 self.location = 1
-                return (1, extIP)
+                return (1, currIntIP)
 
         self.ip = extIP
         self.location = 2

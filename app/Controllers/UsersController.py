@@ -33,10 +33,9 @@ class UsersController(__Controller):
                     if not dbUser == userList[i]:
                         userList[i].id = dbUser.id
                         updates.append(userList[i])
-                        updatesConditions.append('id=' + self.DS.queryFormat(dbUser.id))
 
         idList = self.DS.insertMany(insertions)
-        self.DS.updateMany(updates, updatesConditions)
+        self.DS.updateMany(updates)
 
         for i, id in enumerate(idList):
             insertions[i].id = id

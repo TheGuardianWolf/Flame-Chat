@@ -14,9 +14,19 @@ class StatusController(__Controller):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get(self):
+    def get(self, target):
         if not self.isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
+
+        try:
+            if request['profile_username'] in self.MS.data['userStatus']:
+                responseObj['status'] = self.MS.data['userStatus'][request['profile_username']]
+            else:
+                return '3'
+        except KeyError:
+            return '3'
+
+        return dumps(responseObj)
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
