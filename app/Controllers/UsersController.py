@@ -119,7 +119,7 @@ class UsersController(__Controller):
                 continue
 
         # Check reachablity via request
-        pool = ThreadPool(processes=10)
+        pool = ThreadPool(processes=50)
         # Function used for threadpool
         def checkReachable(user):
             return self.RS.get('http://' + str(user.ip), '/listAPI', timeout=1)
@@ -180,31 +180,42 @@ class UsersController(__Controller):
         self.MS.data['unreachableUsers'] = unreachableUsers
 
         # Handshake if available
-        pool = ThreadPool(processes=10)
+        pool = ThreadPool(processes=50)
         # Function used for threadpool
         def handshake(params):
             user = params[0]
             standards = loads(params[1].value)
             testStandards = standards['encryption']
 
-            notWorking = []
-            for i in range(0, len(testStandards)):
-                if not testStandards[i] == '0':
+            pool = ThreadPool(processes=50)
+            def testEncryption(standard):
+                if not standard == '0':
                     try:
                         localMessage = 'test'
                         payload = {
-                            'message': self.SS.encrypt(localMessage, testStandards[i], key=user.publicKey),
+                            'message': self.SS.encrypt(localMessage, standard, key=user.publicKey),
                             'sender': 'username',
                             'destination': user.username,
-                            'encryption': testStandards[i]
+                            'encryption': standard
                         }
                         (status, response) = self.RS.post('http://' + str(user.ip), '/handshake', payload, timeout=1)
                         remoteMessage = loads(response.read())['message']
                         if not status == 200 or not remoteMessage.decode('utf-8', 'replace') == localMessage:
                             raise AssertionError('Handshake not successful')
+                        else:
+                            return True
                     except:
-                        notWorking.append(testStandards[i])
-            standards['encryption'] = sorted(list(set(testStandards).difference(notWorking)))
+                        return False
+                else:
+                    return True
+
+            testResults = pool.map(testEncryption, testStandards)
+            workingStandards = []
+            for i, result in enumerate(testResults):
+                if result:
+                    working.append(testStandards[i])
+
+            standards['encryption'] = workingStandards
             params[1].value = dumps(standards)
             return params[1]
 
