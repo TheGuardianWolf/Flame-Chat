@@ -192,13 +192,17 @@ class UsersController(__Controller):
             for i in range(0, len(testStandards)):
                 if not testStandards[i] == '0':
                     try:
+                        localMessage = 'test'
                         payload = {
-                            'message': self.SS.encrypt('test', testStandards[i], key=unhexlify(user.publicKey)),
+                            'message': self.SS.encrypt(localMessage, testStandards[i], key=unhexlify(user.publicKey)),
                             'sender': 'username',
                             'destination': user.username,
                             'encryption': testStandards[i]
                         }
                         (status, response) = self.RS.post('http://' + str(user.ip), '/handshake', payload, timeout=1)
+                        remoteMessage = loads(response.read())['message']
+                        if not status == 200 or not remoteMessage.decode('utf-8', 'replace') == localMessage:
+                            raise AssertionError('Handshake not successful')
                     except:
                         notWorking.append(testStandards[i])
             standards['encryption'] = sorted(list(set(testStandards).difference(notWorking)))
@@ -220,11 +224,15 @@ class UsersController(__Controller):
         except KeyError:
             streamEnabled = False
 
+        username = cherrypy.session['username']
+        passhash = cherrypy.session['passhash']
+
         if not streamEnabled:
+            cherrypy.session.release_lock()
             if self.checkTiming(self.MS.data, 'lastUserListRefresh', 10):
-                self.dynamicRefreshActiveUsers(cherrypy.session['username'], cherrypy.session['passhash'])
+                self.dynamicRefreshActiveUsers(username, passhash)
             if self.checkTiming(self.MS.data, 'lastUserInfoQuery', 10):
-                self.userInfoQuery()
+                self.userInfoQuery(username)
 
         responseObj = {
             'reachable': [],
