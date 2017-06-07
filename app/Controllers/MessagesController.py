@@ -218,18 +218,11 @@ class MessagesController(__Controller):
         for i in range(0, len(q)):
             inbound = q[i].destination == username
             try:
-                ## Check encoding
-                #if str(q[i].encoding) in Globals.standards.encoding:
-                #    raise ValueError('Encoding not supported')
-
                 # Decrypt if encrypted
                 if int(q[i].encryption) > 0:
                     for entryName, entryType in q[i].tableSchema:
                         if entryName not in self.noEncrypt:
                             self.SS.decrypt(getattr(q[i], entryName), q[i].encryption)
-
-                ## Unencode
-                #q[i].message = self.decodeMessage(q[i].message, q[i].encoding)
 
                 # Run checks on inbound messages
                 if inbound:
@@ -246,9 +239,6 @@ class MessagesController(__Controller):
                     # Mark sent if inbound and unmarked
                     if (q[i].destination == username):
                         markReadQueue.append(q[i])
-
-                ## Encode utf-8 for local transmission
-                #q[i].message = self.encodeMessage(q[i].message, '2')
 
                 # Store object to be returned
                 returnObj.append(q[i].serialize()) 
@@ -299,36 +289,20 @@ class MessagesController(__Controller):
         try:
             if len(q) > 0:
                 standards = loads(q[0].value)
-                # Assume we already sorted the values in the db on entry
-                standard = {
-                    'encryption': standards.encryption[-1],
-                    #'encoding': standards.encoding[-1],
-                    'hashing': standards.hashing[-1]
-                }
+            else:
+                raise AssertionError('Support list not found')
         except:
-            standard = {
-                'encryption': '0',
-                #'encoding': '0',
-                'hashing': '0'
+            standards = {
+                'encryption': ['0'],
+                'hashing': ['0']
             }
 
-        # Find destination's encryption key and run test
-        if int(standard['encryption']) > 2:
-            try:
-                user = self.DS.select(User, 'username=' + self.DS.queryFormat(destination))[0]
-                encryptionKey = user.publicKey
-                self.SS.encrypt('a', '3', key=encryptionKey)
-            except:
-                standard['encryption'] = '0'
+        standard = {
+            'encryption': standards.encryption[-1],
+            'hashing': standards.hashing[-1]
+        }
 
-        rawMsg = request['message']#.decode('utf-8', 'replace')
-
-        ## Encode message
-        #if int(standard['encryption']) == 3:
-        #    text = self.encodeMessage(rawMsg, '0')
-        #    standard['encoding'] = 0
-        #else:
-        #    text = self.encodeMessage(rawMsg, standard['encoding'])
+        rawMsg = request['message']
 
         # Hash message
         hash = self.SS.hash(rawMsg, standard['hashing'])
@@ -341,7 +315,6 @@ class MessagesController(__Controller):
             text,
             request['stamp'],
             '0',
-            #standard['encoding'],
             standard['encryption'],
             standard['hashing'],
             self.SS.hash(text),
@@ -350,9 +323,13 @@ class MessagesController(__Controller):
 
         # Encrypt message
         if int(standard['encryption']) > 0:
-            for entryName, entryType in msg.tableSchema:
-                if entryName not in self.noEncrypt:
-                    self.SS.encrypt(getattr(msg, entryName), standard['encryption'], key=encryptionKey)
+            try:
+                user = self.DS.select(User, 'username=' + self.DS.queryFormat(destination))[0]
+                for entryName, entryType in msg.tableSchema:
+                    if entryName not in self.noEncrypt:
+                        self.SS.encrypt(getattr(msg, entryName), standard['encryption'], key=user.publicKey)
+            except IndexError:
+                pass
 
         # Store message in db
         msgId = self.DS.insert(msg)

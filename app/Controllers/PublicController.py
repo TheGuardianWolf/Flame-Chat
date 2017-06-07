@@ -9,6 +9,7 @@ from app.Models.AuthModel import Auth
 from app.Models.MessageModel import Message
 from app.Models.MessageMetaModel import MessageMeta
 from app.Models.UserModel import User
+from app.Models.UserMetaModel import UserMeta
 from app.Models.ProfileModel import Profile
 from app.Models.FileModel import File
 from app.Models.FileMetaModel import FileMeta
@@ -150,19 +151,46 @@ class PublicController(__Controller):
         del profileObj['id']
         del profileObj['userId']
         #profileObj['encoding'] = 0
+        
+        # Check requestor standards support list
+        conditions = [
+            'key=\'standards',
+            'AND',
+            'userId'
+            'IN',
+            '(SELECT id FROM ' + User.tableName + ' WHERE ip=' + self.DS.queryFormat(cherrypy.request.remote.ip) + ')'
+        ]
+        q = self.DS.select(UserMeta, ' '.join(conditions))
 
-        cherrypy.response.headers['Content-Type'] = 'application/json'
-         
-        if user.publicKey is not None:
+        try:
+            if len(q) > 0:
+                standards = loads(q[0].value)
+                # Assume we already sorted the values in the db on entry
+                standard = {
+                    'encryption': standards.encryption[-1],
+                    #'encoding': standards.encoding[-1],
+                    'hashing': standards.hashing[-1]
+                }
+            else:
+                raise AssertionError('Support list not found')
+        except:
+            standard = {
+                'encryption': '0',
+                #'encoding': '0',
+                'hashing': '0'
+            }
+
+        if not standard['encryption'] == '0':
             encProfileObj = {}
             try:
                 for key, value in profileObj.items():
-                    encProfileObj[key] = self.SS.encrypt(unicode(value), '3', key=user.publicKey)
-                encProfileObj['encryption'] = 3
-                return dumps(profileObj)
+                    encProfileObj[key] = self.SS.encrypt(unicode(value), standard['encryption'], key=user.publicKey)
+                encProfileObj['encryption'] = standard['encryption']
+                profileObj = encProfileObj
             except ValueError:
                 pass
 
+        cherrypy.response.headers['Content-Type'] = 'application/json'
         return dumps(profileObj)
     
     @cherrypy.tools.json_in()

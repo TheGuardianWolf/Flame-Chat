@@ -168,6 +168,17 @@ class UsersController(__Controller):
                         'hashing': ['0']
                     }
 
+                # Test encryption standards higher than 2 based on reciever public key entry
+                # Find destination's encryption key and run test
+                if int(standards['encryption'][-1]) > 2:
+                    try:
+                        encryptionKey = potentiallyReachable[i].publicKey
+                        self.SS.encrypt('a', '3', key=encryptionKey)
+                    except:
+                        for i in range(2, -1, -1):
+                            if unicode(i) in standards['encryption']:
+                                standard['encryption'] = unicode(i)
+
                 standardsMeta = UserMeta(None, potentiallyReachable[i].id, 'standards', dumps(standards))
                 # Check if entry exists
                 q = self.DS.select(UserMeta, 'userId=' + self.DS.queryFormat(potentiallyReachable[i].id) + ' AND key=\'standards\'')
