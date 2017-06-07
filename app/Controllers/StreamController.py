@@ -15,8 +15,6 @@ class StreamController(object):
         self.__profiles = controllers['ProfilesController']
         self.__status = controllers['StatusController']
 
-        # Setup loop here to run tasks
-
     def contentPush(self):
         self.__messages.pushMessages()
         self.__files.pushFiles()

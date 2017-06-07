@@ -4,9 +4,8 @@ from app import Globals
 from app.Services.DatabaseService import DatabaseService
 from app.Services.LoginService import LoginService
 from app.Services.SecureService import SecureService
-from app.Services.RestfulService import RestfulService
+from app.Services.RequestService import RequestService
 from app.Services.MemoryService import MemoryService
-from app.Controllers.PublicController import PublicController
 from app.Routers.LocalRouter import LocalRouter
 from app.Routers.RemoteRouter import RemoteRouter
 
@@ -35,17 +34,17 @@ class Server(object):
             'DatabaseService': DatabaseService(Globals.dbPath),
             'LoginService': LoginService(),
             'SecureService': SecureService(),
-            'RestfulService': RestfulService(),
+            'RequestService': RequestService(),
             'MemoryService': MemoryService()
         }
 
         self.routers = {
             'LocalRouter': LocalRouter(self.services),
-            #'RemoteRouter': RemoteRouter(self.services)
+            'RemoteRouter': RemoteRouter(self.services)
         }
 
     def mountTree(self):
-        cherrypy.tree.mount(PublicController(self.services), '/', config=self.staticConfig)
+        cherrypy.tree.mount(self.routers['RemoteRouter'], '/', config=self.staticConfig)
         cherrypy.tree.mount(self.routers['LocalRouter'], '/local')
 
     # a blocking call that starts the web application listening for requests

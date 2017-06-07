@@ -71,7 +71,7 @@
     <Compile Include="app\Services\MemoryService.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="app\Services\RestfulService.py">
+    <Compile Include="app\Services\RequestService.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="app\Services\SecureService.py">

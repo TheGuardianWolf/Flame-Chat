@@ -5,7 +5,7 @@ class __Controller(object):
     def __init__(self, services):
         self.LS = services['LoginService']
         self.SS = services['SecureService']
-        self.RS = services['RestfulService']
+        self.RS = services['RequestsService']
         self.DS = services['DatabaseService']
         self.MS = services['MemoryService']
 
