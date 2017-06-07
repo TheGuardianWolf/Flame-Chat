@@ -130,6 +130,7 @@ class UsersController(__Controller):
 
         handshakeQueryList = []
         statusQueryList = []
+        retrieveMessagesList = []
 
         # Sort responses
         for i, response in enumerate(responses):
@@ -195,8 +196,12 @@ class UsersController(__Controller):
 
                 if '/getStatus' in apiList:
                     statusQueryList.append(potentiallyReachable[i])
+
+                if '/retrieveMessages' in apiList:
+                    retrieveMessagesList.append(potentiallyReachable[i])
         
         self.MS.data['statusQueryList'] = statusQueryList
+        self.MS.data['retrieveMessages'] = retrieveMessagesList
         self.MS.data['reachableUsers'] = reachableUsers
         self.MS.data['unreachableUsers'] = unreachableUsers
 
@@ -244,6 +249,26 @@ class UsersController(__Controller):
 
         self.DS.updateMany(standardsMetaList)
 
+    def requestRetrieval(username):
+        try:
+            reachableUsers = self.MS.data['reachableUsers']
+        except KeyError:
+            return
+
+        retrieveFrom = []
+        for user in reachableUsers:
+            if not user.ip == self.LS.ip:
+                retrieveFrom.append(user)
+
+        pool = ThreadPool(processes=50)
+
+        def retrieveMessages(user):
+            (status, response) = self.RS.post('http://' + str(user.ip), '/retrieveMessages', {'username': username}, timeout=1)
+
+        pool.map(retrieveMessages, retrieveFrom)
+
+        return
+
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get(self):
@@ -260,12 +285,19 @@ class UsersController(__Controller):
         username = cherrypy.session['username']
         passhash = cherrypy.session['passhash']
 
+
         if not streamEnabled:
+            pull = False
+            if pulled not in cherrypy.session:
+                cherrypy.session['pulled'] = True
+                pull = True
             cherrypy.session.release_lock()
             if self.checkTiming(self.MS.data, 'lastUserListRefresh', 10):
                 self.dynamicRefreshActiveUsers(username, passhash)
             if self.checkTiming(self.MS.data, 'lastUserInfoQuery', 10):
                 self.userInfoQuery(username)
+            if pull:
+                requestRetrieval(username)
 
         responseObj = {
             'reachable': [],

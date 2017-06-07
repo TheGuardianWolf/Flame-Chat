@@ -39,6 +39,10 @@ class StreamController(object):
         elif self.checkTiming(memoryData, 'lastUserInfoQuery', 10):
             self.__users.userInfoQuery(sessionData['username'])
 
+        elif pulled not in sessionData:
+            self.__users.requestRetrieval(sessionData['username'])
+            return True
+
         elif self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
             self.__status.userStatusQuery()
 
@@ -50,6 +54,8 @@ class StreamController(object):
 
         elif self.checkTiming(memoryData, 'lastRelayFileSend', 300):
             self.__files.relayFileSend()
+
+        return None
 
 
     @cherrypy.expose
@@ -66,14 +72,17 @@ class StreamController(object):
         errorCode = '-1'
 
         sessionData = dict.copy(cherrypy.session)
-        cherrypy.session.release_lock()
-
+        
         def content():
             while True: 
                 cherrypy.session['streamEnabled'] = True
-                self.upkeep(sessionData)
+                cherrypy.session.release_lock()
+                pulled = self.upkeep(sessionData)
                 yield 'ping\n\n'
-                sleep(1)       
+                sleep(1)
+                cherrypy.session.acquire_lock()
+                if pulled == True:
+                    cherrypy.session['pulled'] = True
                 
         return content()
 
