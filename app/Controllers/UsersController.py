@@ -247,6 +247,8 @@ class UsersController(__Controller):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get(self):
+        if (cherrypy.request.remote.ip != '127.0.0.1'):
+            raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
         if not self.isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 

@@ -93,31 +93,31 @@ class AuthController(__Controller):
         else:
             self.DS.insert(Auth(None, username, passhash))
 
-    @cherrypy.expose
-    def stream(self):
-        if (cherrypy.request.remote.ip != '127.0.0.1'):
-            raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
-        if not self.isAuthenticated():
-            raise cherrypy.HTTPError(403, 'User not authenticated')
+    #@cherrypy.expose
+    #def stream(self):
+    #    if (cherrypy.request.remote.ip != '127.0.0.1'):
+    #        raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
+    #    if not self.isAuthenticated():
+    #        raise cherrypy.HTTPError(403, 'User not authenticated')
 
-        cherrypy.response.stream = True
-        cherrypy.response.headers['Content-Type'] = 'text/event-stream'
-        cherrypy.response.headers['Cache-Control'] = 'no-cache'
-        errorCode = '-1'
+    #    cherrypy.response.stream = True
+    #    cherrypy.response.headers['Content-Type'] = 'text/event-stream'
+    #    cherrypy.response.headers['Cache-Control'] = 'no-cache'
+    #    errorCode = '-1'
         
-        username = cherrypy.session['username']
-        passhash = cherrypy.session['passhash']
+    #    username = cherrypy.session['username']
+    #    passhash = cherrypy.session['passhash']
 
-        cherrypy.session.release_lock()
+    #    cherrypy.session.release_lock()
 
 
-        def content():
-            while True:
-                (errorCode, errorMessage) = self.dynamicAuth(username, passhash)
-                yield str(errorCode) + errorMessage + '\n\n'
-                sleep(40)  
+    #    def content():
+    #        while True:
+    #            (errorCode, errorMessage) = self.dynamicAuth(username, passhash)
+    #            yield str(errorCode) + errorMessage + '\n\n'
+    #            sleep(40)  
                   
-        return content()
+    #    return content()
 
     @cherrypy.expose
     @cherrypy.tools.json_in()

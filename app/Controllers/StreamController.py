@@ -61,6 +61,7 @@ class StreamController(object):
             raise cherrypy.HTTPError(403, 'User not authenticated')
 
         cherrypy.response.stream = True
+        cherrypy.session['streamEnabled'] = True
         cherrypy.response.headers['Content-Type'] = 'text/event-stream'
         cherrypy.response.headers['Cache-Control'] = 'no-cache'
         errorCode = '-1'

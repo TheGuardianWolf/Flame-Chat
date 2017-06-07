@@ -4,8 +4,6 @@ class File(__Model):
     tableName = 'files'
     tableSchema = [
         ('id', 'integer primary key'),
-        ('fileId', 'text'),
-        ('recievedTime', 'text'),
         ('sender', 'text'),
         ('destination', 'text'),
         ('file', 'text'),

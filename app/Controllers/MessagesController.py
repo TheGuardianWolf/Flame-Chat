@@ -8,12 +8,11 @@ from app.Models.MessageMetaModel import MessageMeta
 from app.Models.UserModel import User
 from app.Models.UserMetaModel import UserMeta
 from json import loads, dumps
-from binascii import unhexlify
 
 class MessagesController(__Controller):
     def __init__(self, services):
         super(MessagesController, self).__init__(services)
-        self.noEncrypt = ['sender', 'destination', 'encryption']#, 'encoding']
+        self.noEncrypt = ['sender', 'destination', 'encryption']
 
     def decodeMessage(self, msg, encoding):
         if str(encoding) == '0':
@@ -99,6 +98,7 @@ class MessagesController(__Controller):
         pool.map(push, pushList)
 
     def relayMessages(self):
+        self.MS.data['lastRelayMessageSend'] = datetime.utcnow()
         conditions = [
             'id',
             'IN',
@@ -175,10 +175,23 @@ class MessagesController(__Controller):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get(self, target, since=None):
+        if (cherrypy.request.remote.ip != '127.0.0.1'):
+            raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
         if not self.isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
+
+        try:
+            streamEnabled = cherrypy.session['streamEnabled']
+        except KeyError:
+            streamEnabled = False
+
         username = cherrypy.session['username']
+
         cherrypy.session.release_lock()
+        if not streamEnabled:
+            if self.checkTiming(self.MS.data, 'lastRelayMessageSend', 300):
+                self.relayMessages()
+
         if since is None:
             conditions = [
                 '(sender=' + self.DS.queryFormat(username),
@@ -258,6 +271,8 @@ class MessagesController(__Controller):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def post(self):
+        if (cherrypy.request.remote.ip != '127.0.0.1'):
+            raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
         if not self.isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 
@@ -302,8 +317,6 @@ class MessagesController(__Controller):
             'hashing': standards.hashing[-1]
         }
 
-        rawMsg = request['message']
-
         # Hash message
         hash = self.SS.hash(rawMsg, standard['hashing'])
 
@@ -312,12 +325,11 @@ class MessagesController(__Controller):
             None,
             username,
             destination,
-            text,
+            request['message'],
             request['stamp'],
-            '0',
             standard['encryption'],
             standard['hashing'],
-            self.SS.hash(text),
+            self.SS.hash(request['message']),
             None
         )
 
@@ -344,7 +356,8 @@ class MessagesController(__Controller):
         msgId = self.DS.insert(msg)
 
         try:
-            self.MS.data['pushRequests'].append(request['destination'])
+            if request['destination'] not in self.MS.data['pushRequests']:
+                self.MS.data['pushRequests'].append(request['destination'])
         except KeyError:
             self.MS.data['pushRequests'] = [request['destination']]
 
