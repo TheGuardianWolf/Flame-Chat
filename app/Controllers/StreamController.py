@@ -12,6 +12,7 @@ class StreamController(object):
         self.__auth = controllers['AuthController']
         self.__users = controllers['UsersController']
         self.__messages = controllers['MessagesController']
+        self.__files = controllers['FilesController']
         self.__profiles = controllers['ProfilesController']
         self.__status = controllers['StatusController']
 
@@ -64,16 +65,16 @@ class StreamController(object):
         cherrypy.response.headers['Cache-Control'] = 'no-cache'
         errorCode = '-1'
 
+        sessionData = dict.copy(cherrypy.session)
+        cherrypy.session.release_lock()
+
         def content():
             while True: 
                 cherrypy.session['streamEnabled'] = True
-                sessionData = dict.copy(cherrypy.session)
-                cherrypy.session.release_lock()
-                self.upkeep()
+                self.upkeep(sessionData)
                 yield 'ping\n\n'
-                sleep(3) 
-                cherrypy.session.acquire_lock()
-                  
+                sleep(1)       
+                
         return content()
 
     @cherrypy.expose

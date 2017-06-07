@@ -1,7 +1,8 @@
 from app import Globals
 from urllib import urlencode
-from urllib2 import urlopen, HTTPError, URLError
+from urllib2 import urlopen, HTTPError, URLError, Request
 from httplib import HTTPException
+from json import dumps
 
 class RequestService(object):
     def get(self, url, endpoint, payload=None, timeout=None):
@@ -21,15 +22,21 @@ class RequestService(object):
         except HTTPException, e:
             return (e.errno, None)
 
-    def post(self, url, endpoint, payload=None, timeout=None):
+    def post(self, url, endpoint, payload, timeout=None, json=True):
         try:
             requestUrl = url + endpoint
-            if (payload is not None):
-                requestUrl += '?' + urlencode(payload)
-            if (timeout is not None):
-                response = urlopen(requestUrl, timeout=timeout)
+            if json:
+                headers = {
+                    'Content-Type': 'application/json'    
+                }
+                request = Request(requestUrl, dumps(payload), headers=headers) 
             else:
-                response = urlopen(requestUrl)
+                requestUrl += '?' + urlencode(payload)
+                request = Request(requestUrl)
+            if (timeout is not None):
+                response = urlopen(request, timeout=timeout)
+            else:
+                response = urlopen(request)
             return (200, response)
         except HTTPError, e:
             return (e.code, None)
