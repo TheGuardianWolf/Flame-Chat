@@ -56,6 +56,7 @@ class AuthController(__Controller):
             return (-2, 'Request error ' + str(status) + ': Login server authentication not available.')
 
     def dynamicAuth(self, username, passhash, enc=1):
+        cherrypy.session['lastLoginReportTime'] = datetime.utcnow()
         if (self.LS.loginServerStatus()):
             (errorCode, errorMessage) = self.__loginServerAuth(username, passhash)
 
@@ -79,8 +80,7 @@ class AuthController(__Controller):
                     self.MS.data['authenticatedUsers'].append(username)
             except KeyError:
                 self.MS.data['authenticatedUsers'] = [username]
-            
-        cherrypy.session['lastLoginReportTime'] = datetime.utcnow()
+
         return (errorCode, errorMessage)
 
     def __storeAuth(self, username, passhash):

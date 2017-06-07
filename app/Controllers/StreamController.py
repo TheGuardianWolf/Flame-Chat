@@ -18,13 +18,18 @@ class StreamController(object):
         # Setup loop here to run tasks
 
     def contentPush(self):
-        pass
+        self.__messages.pushMessages()
+        self.__files.pushFiles()
+        self.MS.data['pushRequests'] = []
 
     def upkeep(self, sessionData):
         memoryData = self.DS.data
 
-        if len(self.MS.data['pushRequests']) > 0:
-            self.contentPush()
+        try:
+            if len(self.MS.data['pushRequests']) > 0:
+                self.contentPush()
+        except KeyError:
+            self.MS.data['pushRequests'] = []
 
         if self.checkTiming(sessionData, 'lastLoginReportTime', 10):
             self.__auth.dynamicAuth(sessionData['username'], sessionData['passhash'])
@@ -39,7 +44,7 @@ class StreamController(object):
             self.__status.userStatusQuery()
 
         elif self.checkTiming(memoryData, 'lastUserProfileQuery', 10):
-            self.__profiles.userProfileQuery()
+            self.__profiles.userProfileQuery(sessionData['username'])
         
         elif self.checkTiming(memoryData, 'lastRelayMessageSend', 300):
             self.__messages.relayMessageSend()

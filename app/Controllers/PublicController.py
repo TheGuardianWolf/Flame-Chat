@@ -201,11 +201,6 @@ class PublicController(__Controller):
             return '1'
 
         try:
-            user = self.DS.select(User, 'username=' + self.DS.queryFormat(request['requestor']))[0]
-        except IndexError:
-            return '4'
-
-        try:
             self.MS.data['pushRequests'].append(request['requestor'])
         except KeyError:
             self.MS.data['pushRequests'] = [request['requestor']]

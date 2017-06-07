@@ -1,7 +1,6 @@
 import cherrypy
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
-import re
 from app import Globals
 from app.Controllers.__Controller import __Controller
 from app.Models.UserModel import User
@@ -23,15 +22,14 @@ class UsersController(__Controller):
         insertions = []
         updateUserId = []
         updates = []
-        updatesConditions = []
 
         for i, results in enumerate(q):
             if len(results) == 0:
                 insertions.append(userList[i])
             else:
-                for dbUser in results:
-                    if not dbUser == userList[i]:
-                        userList[i].id = dbUser.id
+                for dbEntry in results:
+                    if not dbEntry == userList[i]:
+                        userList[i].id = dbEntry.id
                         updates.append(userList[i])
 
         idList = self.DS.insertMany(insertions)
@@ -84,21 +82,22 @@ class UsersController(__Controller):
             return (0, 'Successfully retrieved active user list from login server.')
             
         else:
-            self.MS.data['lastUserListRefresh'] = datetime.utcnow()
             return (-2, 'Request error ' + str(status) + ': Login server user list not available.')
 
     def dynamicRefreshActiveUsers(self, username, passhash):
+        self.MS.data['lastUserListRefresh'] = datetime.utcnow()
+        
         if self.LS.online:
             (errorCode, errorMessage) = self.__refreshActiveServerUsers(username, passhash)
         else:
             errorCode = -2
-            errorMessage = 'Login server is offline.'
-            
-        self.MS.data['lastUserListRefresh'] = datetime.utcnow()
+            errorMessage = 'Login server is offline.'    
+        
         return (errorCode, errorMessage)
 
     # Call remote peer getList
     def userInfoQuery(self, username):
+        self.MS.data['lastUserInfoQuery'] = datetime.utcnow()
         reachableUsers = []
         unreachableUsers = []
         
@@ -106,17 +105,21 @@ class UsersController(__Controller):
 
         # Check reachablity via location filter
         for user in self.MS.data['activeUsers']:
-            try:
+            # Users at this server should marked 'reachable'
+            if user.ip == self.LS.ip:
+                reachableUsers.append(user)
+            else:
                 try:
-                    remoteLocation = int(user.location)
-                except TypeError:
-                    raise AssertionError('User location unparsable')
-                if not remoteLocation == self.LS.location and not remoteLocation == 2:
-                    raise AssertionError('User in unaccessable location')
-                potentiallyReachable.append(user)
-            except AssertionError:
-                unreachableUsers.append(user)
-                continue
+                    try:
+                        remoteLocation = int(user.location)
+                    except TypeError:
+                        raise AssertionError('User location unparsable')
+                    if not remoteLocation == self.LS.location and not remoteLocation == 2:
+                        raise AssertionError('User in unaccessable location')
+                    potentiallyReachable.append(user)
+                except AssertionError:
+                    unreachableUsers.append(user)
+                    continue
 
         # Check reachablity via request
         pool = ThreadPool(processes=50)
@@ -125,8 +128,10 @@ class UsersController(__Controller):
             return self.RS.get('http://' + str(user.ip), '/listAPI', timeout=1)
         responses = pool.map(checkReachable, potentiallyReachable)
 
+        handshakeQueryList = []
+        statusQueryList = []
+
         # Sort responses
-        handshakeList = []
         for i, response in enumerate(responses):
             if response[0] == 200:
                 reachableUsers.append(potentiallyReachable[i])
@@ -173,9 +178,14 @@ class UsersController(__Controller):
                     id = self.DS.insert(standardsMeta)
                     standardsMeta.id = id
 
+                # Make list of users with these optional APIs
                 if '/handshake' in apiList and not (len(standards['encryption']) == 1 and '0' in standards['encryption']):
-                    handshakeList.append((potentiallyReachable[i], standardsMeta))
+                    handshakeQueryList.append((potentiallyReachable[i], standardsMeta))
+
+                if '/getStatus' in apiList:
+                    statusQueryList.append(potentiallyReachable[i])
         
+        self.MS.data['statusQueryList'] = statusQueryList
         self.MS.data['reachableUsers'] = reachableUsers
         self.MS.data['unreachableUsers'] = unreachableUsers
 
@@ -219,7 +229,7 @@ class UsersController(__Controller):
             params[1].value = dumps(standards)
             return params[1]
 
-        standardsMetaList = pool.map(handshake, handshakeList)
+        standardsMetaList = pool.map(handshake, handshakeQueryList)
 
         self.DS.updateMany(standardsMetaList)
 
@@ -264,6 +274,9 @@ class UsersController(__Controller):
 
         for user in reachableUsers + unreachableUsers:
             filterOut.append(self.DS.queryFormat(user.username))
+
+        # Don't include yourself
+        filterOut.append(self.DS.queryFormat(username))
 
         if len(filterOut) > 0:
             unknownUsers = self.DS.select(User, 'username NOT IN ' + self.DS.bracketJoin(',', filterOut))

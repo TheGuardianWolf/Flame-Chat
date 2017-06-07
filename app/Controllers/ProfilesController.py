@@ -12,7 +12,7 @@ class ProfilesController(__Controller):
     def updateTable(self, profileList):
         conditionList = []
         for profile in profileList:
-            conditionList.append('username=' + self.DS.queryFormat(profile.username))
+            conditionList.append('userId=' + self.DS.queryFormat(profile.userId))
         modelsList = [Profile] * len(conditionList)
         q = self.DS.selectMany(modelsList, conditionList)
 
@@ -28,24 +28,94 @@ class ProfilesController(__Controller):
                     if not dbEntry == profileList[i]:
                         profileList[i].id = dbEntry.id
                         updates.append(profileList[i])
-                        updatesConditions.append('id=' + self.DS.queryFormat(dbUser.id))
 
         self.DS.insertMany(insertions)
-        self.DS.updateMany(updates, updatesConditions)
+        self.DS.updateMany(updates)
 
-    def userProfileQuery(self):
+    def userProfileQuery(self, username):
         self.MS.data['lastUserProfileQuery'] = datetime.utcnow()
-        return (0, 'Active user data updated')
-        
+        try:
+            profileQueryList = self.MS.data['activeUsers']
+        except KeyError:
+            profileQueryList = []
+
+        pool = ThreadPool(processes=50)
+        def getProfile(user):
+            # Don't query for profiles at this server
+            if user.ip == self.LS.ip:
+                return (user, None)
+            else:
+                payload = {
+                    'profile_username': user.username,
+                    'sender': username
+                }
+                (status, response) = self.RS.post('http://' + str(user.ip), '/getProfile', payload)
+                if status == 200:
+                    return (user, loads(response.read()))
+                else:
+                    return (user, None)
+
+        responses = pool.map(getProfile, profileQueryList)
+
+        profileList = []
+        for user, profile in responses:
+            if profile is not None:
+                model = Profile.deserialize(profile)
+                model.userId = user.id
+                profileList.append(model)
+
+        self.updateTable(profileList)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def get(self, target):
+        if not self.isAuthenticated():
+            raise cherrypy.HTTPError(403, 'User not authenticated')
+
         try:
             streamEnabled = cherrypy.session['streamEnabled']
         except KeyError:
             streamEnabled = False
 
         if not streamEnabled:
-            if (self.MS.data['lastUserListRefresh'] - currentTime).seconds > 10:
-                self.dynamicRefreshActiveUsers(cherrypy.session['username'], cherrypy.session['passhash'])
-            if (self.MS.data['lastUserInfoQuery'] - currentTime).seconds > 10:
-                self.queryActiveUsers()
+            cherrypy.session.release_lock()
+            if self.checkTiming(self.MS.data, 'lastUserProfileQuery', 10):
+                self.userProfileQuery()
 
+        profiles = self.DS.select(Profile)
 
+        responseObj = []
+
+        for profile in profiles:
+            responseObj.append(profile.serialize())
+
+        return responseObj
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    def post(self):
+        if not self.isAuthenticated():
+            raise cherrypy.HTTPError(403, 'User not authenticated')
+
+        try:
+            request = cherrypy.request.json
+        except AttributeError:
+            raise cherrypy.HTTPError(400, 'JSON payload not sent.')
+
+        if not self.checkObjectKeys(request, ['fullname', 'position', 'description', 'location', 'picture']):
+            raise cherrypy.HTTPError(400, 'Missing required parameters.')
+
+        # Get user id of posting user
+        q = self.DS.select(User, 'username=' + self.DS.queryFormat(cherrypy.session['username']))
+
+        try:
+            user = q[0]
+        except IndexError:
+            raise cherrypy.HTTPError(500, 'Authorised user not in database.')
+
+        # Add new entry for profile or update
+        model = Profile.deserialize(request)
+        model.userId = user.id
+        self.updateTable([model])
+
+        return

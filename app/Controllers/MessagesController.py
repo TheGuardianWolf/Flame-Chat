@@ -1,5 +1,6 @@
 import cherrypy
 from datetime import datetime
+from multiprocessing.pool import ThreadPool
 from app import Globals
 from app.Controllers.__Controller import __Controller
 from app.Models.MessageModel import Message
@@ -50,7 +51,127 @@ class MessagesController(__Controller):
                         return False
                 except (ValueError, TypeError):
                     return False
+     
+    def upsertMessageMeta(self, metaKey, metaValue, messageList):
+        insertList = []
+        updateList = []
+        for msg in messageList:
+            q = self.DS.select(MessageMeta, 'messageId=' + self.DS.queryFormat(msg.id) + ' AND key=\'' + metaKey + '\'')
+            if len(q) > 0:
+                updateList.append(MessageMeta(q[0].id, msg.id, metaKey, metaValue))
+            else:
+                insertList.append(MessageMeta(None, msg.id, metaKey, metaValue))
+        if len(updateList) > 0:
+            self.DS.updateMany(updateList)
+        if len(insertList) > 0:
+            self.DS.insertMany(insertList)
+
+    def deleteMessages(self, messageList):
+        modelsList = []
+        conditionsList = []
+        for msg in messageList:
+            modelsList.append(Message)
+            conditionsList.append('id=' + self.DS.queryFormat(msg.id))
+            modelsList.append(MessageMeta)
+            conditionsList.append('messageId=' + self.DS.queryFormat(msg.id))
+        self.DS.deleteMany(modelsList, conditionsList)
+
+    def pushMessages(self):
+        pushList = []
+        for username in self.MS.data['pushRequests']:
+            conditions = [
+                'destination=' + self.DS.queryFormat(username),
+                'AND'
+                'id',
+                'IN',
+                '(SELECT messageId FROM ' + MessageMeta.tableName + ' WHERE key=\'relayAction\' AND (value=\'send\' OR value=\'broadcast\'))'
+            ]
+            toSend = self.DS.select(Message, ' '.join(conditions))
+            pushList.append(toSend)
+
+        # Helper function to push to individual users
+        def push(messageList):
+            # Cherrypy servers limited to 10 concurrent requests per second
+            pool = ThreadPool(processes=5)
+            pool.map(self.sendMessage, messageList)
+
+        pool = ThreadPool(processes=50)
+        pool.map(push, pushList)
+
+    def relayMessages(self):
+        conditions = [
+            'id',
+            'IN',
+            '(SELECT messageId FROM ' + MessageMeta.tableName + ' WHERE key=\'relayAction\' AND value=\'send\')'
+        ]
+        toSend = self.DS.select(Message, ' '.join(conditions))
+        conditions = [
+            'id',
+            'IN',
+            '(SELECT messageId FROM ' + MessageMeta.tableName + ' WHERE key=\'relayAction\' AND value=\'broadcast\')'
+        ]
+        toBroadcast = self.DS.select(Message, ' '.join(conditions))
+
+        pool = ThreadPool(processes=5)
+        pool.map(self.sendMessage, toSend)
+        pool.map(self.broadcastMessage, toBroadcast)
+
+    def sendMessage(self, message, relayTo=None):
+        destination = relayTo
+
+        if relayTo is None:
+            # Find user entry
+            for user in reachableUsers:
+                if message.destination == user.username:
+                    destination = user
+
+        if destination is not None:
+            if not destination.ip == self.LS.ip:
+                # Send the message if destination is not local
+                (status, response) = self.RS.post('http://' + str(destination.ip), '/receiveMessage', payload)
+            # Mark message action as store if direct send, else as send if relayed
+            if relayTo is None:
+                self.upsertMessageMeta('relayAction', 'store', [message])
+            else:
+                # Should I still attempt direct send after relaying?
+                # Currently, yes, as it's best not to rely on other relay nodes
+                self.upsertMessageMeta('relayAction', 'send', [message])
+        return
+                
+
+    def broadcastMessage(self, message):
+        try:
+            reachableUsers = self.MS.data['reachableUsers']
+        except KeyError:
+            reachableUsers = []
+        
+        reachableRemoteUsers = []
+        
+        # Filter out the local users from the broadcast list
+        # Messages with local user as destination and broadcast will be held indefinately
+        for user in reachableUsers:
+            if user.ip == self.LS.ip:
+                if user.username == message.destination:
+                    return
+            else:
+                reachableRemoteUsers.append(user)
+    
+        # Check if destination is on the broadcast list, and if so, change to direct send
+        for user in reachableRemoteUsers:
+            if message.destination == user.username:
+                # Change to direct send
+                return self.sendMessage(message)
+                
+        paramList = []
+        for user in reachableRemoteUsers:
+            paramList.append((user, message))
+        pool = ThreadPool(processes=25)
+        # Can only use one argument with map, so use helper function to seperate parameters from a tuple
+        def delegate(params):
+            self.sendMessage(params[0], relayTo=params[1])
+        pool.map(delegate, paramList)
             
+
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get(self, target, since=None):
@@ -136,28 +257,10 @@ class MessagesController(__Controller):
                 continue
 
             # Process mark-reads
-            insertList = []
-            updateList = []
-            for msg in markReadQueue:
-                q = self.DS.select(MessageMeta, 'messageId=' + self.DS.queryFormat(msg.id) + ' AND key=\'relayStatus\'')
-                if len(q) > 0:
-                    updateList.append(MessageMeta(q[0].id, msg.id, 'relayAction', 'sent'))
-                else:
-                    insertList.append(MessageMeta(None, msg.id, 'relayAction', 'sent'))
-            if len(updateList) > 0:
-                self.DS.updateMany(updateList)
-            if len(insertList) > 0:
-                self.DS.insertMany(insertList)
+            self.upsertMessageMeta('relayAction', 'store', markReadQueue)
             
             # Process removals
-            modelsList = []
-            conditionsList = []
-            for msg in removeQueue:
-                modelsList.append(Message)
-                conditionsList.append('id=' + self.DS.queryFormat(msg.id))
-                modelsList.append(MessageMeta)
-                conditionsList.append('messageId=' + self.DS.queryFormat(msg.id))
-            self.DS.deleteMany(modelsList, conditionsList)
+            self.deleteMessages(removeQueue)
 
         return returnObj
 
