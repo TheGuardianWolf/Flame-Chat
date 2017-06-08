@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 import cherrypy
 import os
 from app import Globals
@@ -33,7 +35,7 @@ class Server(object):
         self.services = {
             'DatabaseService': DatabaseService(Globals.dbPath),
             'LoginService': LoginService(),
-            'SecureService': SecureService(),
+            'SecureService': SecureService(Globals.privateKeyPath, Globals.publicKeyPath),
             'RequestService': RequestService(),
             'MemoryService': MemoryService()
         }

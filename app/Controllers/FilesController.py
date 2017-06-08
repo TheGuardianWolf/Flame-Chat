@@ -112,7 +112,7 @@ class FilesController(__Controller):
         if destination is not None:
             if not destination.ip == self.LS.ip:
                 # Send the file if destination is not local
-                (status, response) = self.RS.post('http://' + str(destination.ip), '/receiveFile', payload)
+                (status, response) = self.RS.post('http://' + str(destination.ip) + ':' + str(destination.port), '/receiveFile', payload)
             # Mark file action as store if direct send, else as send if relayed
             if relayTo is None:
                 self.upsertFileMeta('relayAction', 'store', [file])

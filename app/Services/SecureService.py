@@ -6,40 +6,40 @@ import hashlib
 from binascii import hexlify, unhexlify
 
 class SecureService(object):
-    def __init__(self):
-        self.__loadPeerKeys()
+    def __init__(self, privateKeyPath, publicKeyPath):
+        self.__loadPeerKeys(privateKeyPath, publicKeyPath)
 
-    def __loadPeerKeys(self):
+    def __loadPeerKeys(self, privateKeyPath, publicKeyPath):
         try:
-            privateFile = open(Globals.privateKeyPath, 'r')
+            privateFile = open(privateKeyPath, 'r')
             self.privateKey = RSA.importKey(privateFile.read())
             privateFile.close()
-            print 'Using private key found at ' + Globals.privateKeyPath
+            print 'Using private key found at ' + privateKeyPath
 
             try:
-                publicFile = open(Globals.publicKeyPath, 'r')
+                publicFile = open(publicKeyPath, 'r')
                 self.publicKey = RSA.importKey(publicFile.read())
                 publicFile.close()
-                print 'Using public key found at ' + Globals.publicKeyPath
+                print 'Using public key found at ' + publicKeyPath
             except:
                 self.publicKey = self.privateKey.publickey()
-                privateFile = open(Globals.privateKeyPath, 'w')
+                privateFile = open(privateKeyPath, 'w')
                 privateFile.write(self.privateKey.exportKey("PEM"))
                 privateFile.close()
-                print 'Created new public key at ' + Globals.publicKeyPath
+                print 'Created new public key at ' + publicKeyPath
         except:
             self.privateKey = RSA.generate(1024, e=65537)
             self.publicKey = self.privateKey.publickey()
 
-            publicFile = open(Globals.publicKeyPath, 'w')
+            publicFile = open(publicKeyPath, 'w')
             publicFile.write(self.publicKey.exportKey('PEM') )
             publicFile.close()
-            print 'Created new private key at ' + Globals.privateKeyPath
+            print 'Created new private key at ' + privateKeyPath
 
-            privateFile = open(Globals.privateKeyPath, 'w')
+            privateFile = open(privateKeyPath, 'w')
             privateFile.write(self.privateKey.exportKey('PEM'))
             privateFile.close()
-            print 'Created new public key at ' + Globals.publicKeyPath
+            print 'Created new public key at ' + publicKeyPath
 
     def cmpHash(self, raw):
         m = hashlib.md5()

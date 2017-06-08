@@ -59,7 +59,7 @@ class PublicController(__Controller):
 
     @cherrypy.tools.json_in()
     @cherrypy.expose
-    def recieveMessage(self):#, encoding='0'):
+    def recieveMessage(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
             return '6'
 

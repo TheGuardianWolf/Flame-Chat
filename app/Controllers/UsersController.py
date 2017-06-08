@@ -125,7 +125,7 @@ class UsersController(__Controller):
         pool = ThreadPool(processes=50)
         # Function used for threadpool
         def checkReachable(user):
-            return self.RS.get('http://' + str(user.ip), '/listAPI', timeout=1)
+            return self.RS.get('http://' + str(user.ip) + ':' + str(user.port), '/listAPI', timeout=1)
         responses = pool.map(checkReachable, potentiallyReachable)
 
         handshakeQueryList = []
@@ -224,7 +224,7 @@ class UsersController(__Controller):
                             'destination': user.username,
                             'encryption': standard
                         }
-                        (status, response) = self.RS.post('http://' + str(user.ip), '/handshake', payload, timeout=1)
+                        (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/handshake', payload, timeout=1)
                         remoteMessage = loads(response.read())['message']
                         if not status == 200 or not remoteMessage.decode('utf-8', 'replace') == localMessage:
                             raise AssertionError('Handshake not successful')
@@ -263,7 +263,7 @@ class UsersController(__Controller):
         pool = ThreadPool(processes=50)
 
         def retrieveMessages(user):
-            (status, response) = self.RS.post('http://' + str(user.ip), '/retrieveMessages', {'username': username}, timeout=1)
+            (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/retrieveMessages', {'username': username}, timeout=1)
 
         pool.map(retrieveMessages, retrieveFrom)
 

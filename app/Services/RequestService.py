@@ -18,9 +18,9 @@ class RequestService(object):
         except HTTPError, e:
             return (e.code, None)
         except URLError, e:
-            return (e.errno, None)
+            return (e.reason.errno, None)
         except HTTPException, e:
-            return (e.errno, None)
+            return (e.reason.errno, None)
 
     def post(self, url, endpoint, payload, timeout=None, json=True):
         try:
@@ -41,6 +41,6 @@ class RequestService(object):
         except HTTPError, e:
             return (e.code, None)
         except URLError, e:
-            return (e.errno, None)
+            return (e.reason.errno, None)
         except HTTPException, e:
-            return (e.errno, None)
+            return (e.reason.errno, None)

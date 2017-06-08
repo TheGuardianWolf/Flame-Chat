@@ -80,7 +80,17 @@
     <Compile Include="app\Services\LoginService.py" />
     <Compile Include="app\Services\__init__.py" />
     <Compile Include="app\__init__.py" />
+    <Compile Include="tests\Controllers\test_PublicController.py" />
+    <Compile Include="tests\DummyServer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\ServiceFactory.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="tests\Services\test_DatabaseService.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\__init__.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
@@ -95,6 +105,7 @@
     <Folder Include="app\Services\" />
     <Folder Include="app\wwwroot" />
     <Folder Include="tests\" />
+    <Folder Include="tests\Controllers\" />
     <Folder Include="tests\Services\" />
   </ItemGroup>
   <ItemGroup>

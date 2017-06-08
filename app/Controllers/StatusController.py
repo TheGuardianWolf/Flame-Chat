@@ -21,7 +21,7 @@ class StatusController(__Controller):
             payload = {
                 'profile_username': user.username
             }
-            (status, response) = self.RS.post('http://' + str(user.ip), '/getStatus', payload)
+            (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/getStatus', payload)
             if status == 200:
                 return (user, loads(response.read())['status'])
             else:

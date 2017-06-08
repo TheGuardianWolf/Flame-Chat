@@ -49,7 +49,7 @@ class ProfilesController(__Controller):
                     'profile_username': user.username,
                     'sender': username
                 }
-                (status, response) = self.RS.post('http://' + str(user.ip), '/getProfile', payload)
+                (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/getProfile', payload)
                 if status == 200:
                     return (user, loads(response.read()))
                 else:
