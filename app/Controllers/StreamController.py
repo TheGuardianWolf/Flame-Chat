@@ -2,10 +2,11 @@ import cherrypy
 from datetime import datetime
 from time import sleep
 from app import Globals
+from app.Controllers.__Controller import __Controller
 from app.Models.UserModel import User
 from json import loads, dumps
 
-class StreamController(object):
+class StreamController(__Controller):
     def __init__(self, services, controllers):
         super(StreamController, self).__init__(services)
 

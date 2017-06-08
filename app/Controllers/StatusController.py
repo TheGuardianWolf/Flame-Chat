@@ -7,7 +7,7 @@ from json import loads, dumps
 
 class StatusController(__Controller):
     def __init__(self, services):
-         super(ProfilesController, self).__init__(services)
+         super(StatusController, self).__init__(services)
 
     # Call remote peer getStatus
     def userStatusQuery(self):

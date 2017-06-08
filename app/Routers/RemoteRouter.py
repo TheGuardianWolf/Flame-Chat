@@ -1,6 +1,6 @@
 import cherrypy
 from app import Globals
-from app.Controllers import PublicController
+from app.Controllers.PublicController import PublicController
 
 # Simple hack to have a placeholder router for public api routes
 def RemoteRouter(services):

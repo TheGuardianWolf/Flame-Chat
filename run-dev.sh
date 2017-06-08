@@ -1,1 +1,2 @@
-python2 ./src/server.py
+PYTHONPATH=./;./packages
+python2 ./app/server.py

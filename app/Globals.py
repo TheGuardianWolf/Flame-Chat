@@ -1,8 +1,10 @@
 import os
 import inspect
+import app
 
 # Values for server paths
-appRoot = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+# appRoot = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+appRoot = os.path.dirname(inspect.getfile(app))
 appConfigRoot = os.path.join(appRoot, 'Config')
 webRoot = os.path.join(appRoot, 'wwwroot')
 loginRoot = r'http://cs302.pythonanywhere.com'
