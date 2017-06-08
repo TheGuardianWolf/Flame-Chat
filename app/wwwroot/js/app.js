@@ -9,35 +9,48 @@ var flame = angular.module('flame', [
   'ngAria',
   'ngTouch',
   'angular-loading-bar',
+  'emguo.poller'
 ])
 .config( [
-    '$compileProvider', '$routeProvider', '$locationProvider',
-    function( $compileProvider, $routeProvider, $locationProvider )
-    {
+    '$compileProvider', '$routeProvider', '$locationProvider', 'pollerConfig',
+    function( $compileProvider, $routeProvider, $locationProvider, poller ) {
         $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|data|ms-appx):/);
-        // Configuration options are described below
+
+        $locationProvider.html5Mode(true);
+        
+        poller.smart = true;
 
         $routeProvider
-            .when('/', {
-                templateUrl : 'views/auth.html.txt',
-                controller  : 'authController'
-            })
+        .when('/', {
+            templateUrl : 'views/auth.html.txt',
+            controller  : 'authController',
+            resolve: {
+                init: null
+            }
+        })
 
-            .when('/conversations', {
-                templateUrl : 'views/conversations.html.txt',
-                controller  : 'conversationsController'
-            })
+        .when('/conversations', {
+            templateUrl : 'views/conversations.html.txt',
+            controller  : 'conversationsController',
+            resolve: {
+                init: null
+            }
+        })
 
-            .when('/contacts', {
-                templateUrl: 'views/conversations.html.txt',
-                controller: 'contactsController'
-            })
+        .when('/contacts', {
+            templateUrl: 'views/conversations.html.txt',
+            controller: 'contactsController',
+            resolve: {
+                init: null
+            }
+        })
 
-            .when('/profile', {
-                templateUrl: 'views/profile.html.txt',
-                controller: 'profileController'
-            });
-            // use the HTML5 History API
-        //$locationProvider.html5Mode(true);
+        .when('/profile', {
+            templateUrl: 'views/profile.html.txt',
+            controller: 'profileController',
+            resolve: {
+                init: null
+            }
+        });
     }
 ]);

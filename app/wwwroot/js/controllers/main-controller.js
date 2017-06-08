@@ -1,88 +1,69 @@
-flame.controller('mainController', ['$scope', '$http', '$location', function ($scope, $http, $location) {
-    var fetchUsers = function() {
-        return $http({
-            method: 'GET',
-            url: apiRoute(['users', 'get'])
-        })
-        .then(
-            function success(response) {
-                console.log(response);
-                if (response.data.constructor === Array) {
-                    $scope.data.users = response.data;
-                }
-                else {
-                    errorCode = parseInt(response.data);
-                    $.Notify({
-                        caption: 'Warning ' + response.data,
-                        content: 'Unable to get user list, login server reports error.',
-                        type: 'warning'
-                    });
-                }
-            },
-            function fail(response) {
-                console.log(response);
-                errorCode = parseInt(response.data);
-                $.Notify({
-                    caption: 'Warning ' + response.data,
-                    content: 'Unable to get user list, local server unable to serve request.',
-                    type: 'warning'
-                });
-            }
-        );
-    };
+flame.controller('mainController', [
+    '$scope', 
+    '$http', 
+    '$location', 
+    '$resource', 
+    'poller', 
+    function ($scope, $http, $location, $resource, poller) {
+        $scope.state = {
+            loading: false,
+            authenticated: false,
+            sidebarCompact: true
+        };
 
-    $scope.state = {
-        loading: false,
-        authenticated: false,
-        sidebarCompact: true,
-        ajaxBusy: false,
-    };
+        $scope.data = {
+            users: []
+        };
 
-    $scope.data = {
-        users: []
-    };
+        $scope.cycle = {
+            fetchUsers : null
+        };
 
-    $scope.cycle = {
-        fetchUsers : null
-    };
+        $scope.goto = function(path) {
+            $location.path(path);
+        };
 
-    $scope.goto = function(path) {
-        $location.path(path);
-    };
+        if ($scope.state.authenticated === false) {
+            $location.url('');
+        }
 
-    if ($scope.state.authenticated === false) {
-        $location.url('');
-    }
+        $scope.toggleSidebar = function () {
+            $scope.state.sidebarCompact = !$scope.state.sidebarCompact;
+        };
 
-    $scope.toggleSidebar = function () {
-        $scope.state.sidebarCompact = !$scope.state.sidebarCompact;
-    };
-
-    $scope.streamConnect = function() {
-        console.log('Creating new eventSource');
-        var eventSource = new EventSource(apiRoute(['auth', 'stream']));
-        eventSource.addEventListener('message', function(e) {
-            console.log(e);
-        }, false);
-
-        eventSource.addEventListener('open', function(e) {
-            console.log(e);
-        }, false);
-
-        eventSource.addEventListener('error', function(e) {
-            if (e.readyState == EventSource.CLOSED) {
+        $scope.streamConnect = function() {
+            var eventSource = new EventSource(apiRoute(['stream']));
+            eventSource.addEventListener('message', function(e) {
                 console.log(e);
-            }
-        }, false);
-        return eventSource;
-    };
+            }, false);
 
-    $scope.startCycles = function() {
-        fetchUsers();
-        $scope.cycle.fetchUsers = setInterval(
-            function() {
-                fetchUsers();
-            }, 60000
-        );
-    };
-}]);
+            eventSource.addEventListener('open', function(e) {
+                console.log(e);
+            }, false);
+
+            eventSource.addEventListener('error', function(e) {
+                console.log(e);
+            }, false);
+            return eventSource;
+        };
+
+        var fetch = function(dataType, method, delay, args) {
+            var request = poller.get(apiRoute([dataType, method]), {
+                action: method.toUpperCase(),
+                delay: delay,
+                argumentsArray: args
+            });
+            request.promise.then(null, null, function(response) {
+                console.log(response);
+                $scope.data[dataType] = response.data;
+            });
+            return request;
+        };
+
+        var startCycles = function() {
+            fetchUsers = fetch('users', 'get', 5000, []);
+            fetchProfiles = fetch('profiles', 'get', 5000, []);
+            fetchStatus = fetch('status', 'get', 5000, []);
+        };
+    }
+]);

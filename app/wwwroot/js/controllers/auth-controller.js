@@ -1,4 +1,4 @@
-flame.controller('authController', ['$scope', '$http', '$location', function ($scope, $http, $location) {
+flame.controller('authController', ['$scope', '$http', '$location', 'poller', function ($scope, $http, $location, poller) {
     var authenticate = function(username, password) {
         $scope.state.loading = true;
         return $http({
@@ -54,8 +54,8 @@ flame.controller('authController', ['$scope', '$http', '$location', function ($s
 
     var afterAuthenticate = function() {
         $scope.goto('conversations');
-        $scope.streamConnect();
-        $scope.startCycles();
+        // $scope.streamConnect();
+        // $scope.startCycles();
     };
 
     $scope.login = {};
