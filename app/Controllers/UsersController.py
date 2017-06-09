@@ -73,7 +73,6 @@ class UsersController(__Controller):
             userList = []
 
             for userObj in json.values():
-                userArgs = []
                 userList.append(User.deserialize(userObj))
 
             self.updateTable(userList)
@@ -125,7 +124,7 @@ class UsersController(__Controller):
         pool = ThreadPool(processes=50)
         # Function used for threadpool
         def checkReachable(user):
-            return self.RS.get('http://' + str(user.ip) + ':' + str(user.port), '/listAPI', timeout=3)
+            return self.RS.get('http://' + str(user.ip) + ':' + str(user.port), '/listAPI', timeout=5)
         responses = pool.map(checkReachable, potentiallyReachable)
 
         handshakeQueryList = []
@@ -141,7 +140,9 @@ class UsersController(__Controller):
                 apiList = data[:-3]
                 for i, api in enumerate(apiList):
                     try:
-                        apiList[i] = api.split(' ')[0]
+						endpoint = api.split(' ')[0]
+						if not endpoint == 'Available':
+							apiList[i] = endpoint
                     except IndexError:
                         continue
                 
@@ -204,6 +205,8 @@ class UsersController(__Controller):
 
                 if '/retrieveMessages' in apiList:
                     retrieveMessagesList.append(potentiallyReachable[i])
+            else:
+                unreachableUsers.append(potentiallyReachable[i])
         
         self.MS.data['statusQueryList'] = statusQueryList
         self.MS.data['retrieveMessages'] = retrieveMessagesList

@@ -23,16 +23,16 @@ class StreamController(__Controller):
         self.MS.data['pushRequests'] = []
 
     def upkeep(self, sessionData):
-        memoryData = self.DS.data
+        memoryData = self.MS.data
 
         try:
-            if len(self.MS.data['pushRequests']) > 0:
+            if len(memoryData['pushRequests']) > 0:
                 self.contentPush()
         except KeyError:
-            self.MS.data['pushRequests'] = []
+            memoryData['pushRequests'] = []
 
-        if self.checkTiming(sessionData, 'lastLoginReportTime', 10):
-            self.__auth.dynamicAuth(sessionData['username'], sessionData['passhash'])
+        if self.checkTiming(sessionData, 'lastLoginReportTime', 40):
+            self.__auth.dynamicAuth(sessionData['username'], sessionData['passhash'], sessionData=sessionData)
 
         elif self.checkTiming(memoryData, 'lastUserListRefresh', 10):
             self.__users.dynamicRefreshActiveUsers(sessionData['username'], sessionData['passhash'])
@@ -42,7 +42,7 @@ class StreamController(__Controller):
 
         elif 'pulled' not in sessionData:
             self.__users.requestRetrieval(sessionData['username'])
-            return True
+            sessionData['pulled'] = True
 
         elif self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
             self.__status.userStatusQuery()
@@ -55,8 +55,6 @@ class StreamController(__Controller):
 
         elif self.checkTiming(memoryData, 'lastRelayFileSend', 300):
             self.__files.relayFileSend()
-
-        return None
 
 
     @cherrypy.expose
@@ -71,19 +69,45 @@ class StreamController(__Controller):
         cherrypy.response.headers['Content-Type'] = 'text/event-stream'
         cherrypy.response.headers['Cache-Control'] = 'no-cache'
         errorCode = '-1'
-
-        sessionData = dict.copy(cherrypy.session)
         
         def content():
             while True: 
+                try:
+                    lastLoginReportTime = cherrypy.session['lastLoginReportTime']
+                except KeyError:
+                    lastLoginReportTime = None
+
+                sessionData = {
+                    'username': cherrypy.session['username'],
+                    'passhash': cherrypy.session['passhash'],
+                }
+
+                try:
+                    sessionData['lastLoginReportTime'] = cherrypy.session['lastLoginReportTime']
+                except KeyError:
+                    pass
+
+                try:
+                    sessionData['pulled'] = cherrypy.session['pulled']
+                except KeyError:
+                    pass
+
                 cherrypy.session['streamEnabled'] = True
                 cherrypy.session.release_lock()
-                pulled = self.upkeep(sessionData)
+                self.upkeep(sessionData)
                 yield 'ping\n\n'
                 sleep(1)
                 cherrypy.session.acquire_lock()
-                if pulled == True:
-                    cherrypy.session['pulled'] = True
+
+                try:
+                    cherrypy.session['lastLoginReportTime'] = sessionData['lastLoginReportTime']
+                except KeyError:
+                    pass
+
+                try:
+                    cherrypy.session['pulled'] = sessionData['pulled']
+                except KeyError:
+                    pass
                 
         return content()
 

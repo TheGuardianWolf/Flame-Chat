@@ -23,7 +23,7 @@ flame.controller('mainController', [
         };
 
         if ($scope.state.authenticated === false) {
-            $location.url('');
+            $location.path('/');
         }
 
         $scope.toggleSidebar = function () {
@@ -62,7 +62,6 @@ flame.controller('mainController', [
                 argumentsArray: args
             });
             request.promise.then(null, null, function(response) {
-                console.log(response);
                 $scope.data[dataType] = response.data;
             });
             return request;

@@ -1,4 +1,4 @@
-var apiUrl = "http://localhost:8080/local";
+var apiUrl = location.origin + "/local";
 
 var apiRoute = function(list) {
     return apiUrl + '/' + list.join('/') + '/';
