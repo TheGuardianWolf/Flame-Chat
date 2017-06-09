@@ -81,9 +81,6 @@
     <Compile Include="app\Services\__init__.py" />
     <Compile Include="app\__init__.py" />
     <Compile Include="tests\Controllers\test_PublicController.py" />
-    <Compile Include="tests\DummyServer.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="tests\ServiceFactory.py">
       <SubType>Code</SubType>
     </Compile>

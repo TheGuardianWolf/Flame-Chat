@@ -1,4 +1,6 @@
 import cherrypy
+from time import gmtime, strftime
+from calendar import timegm
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from app import Globals
@@ -80,7 +82,7 @@ class MessagesController(__Controller):
         for username in self.MS.data['pushRequests']:
             conditions = [
                 'destination=' + self.DS.queryFormat(username),
-                'AND'
+                'AND',
                 'id',
                 'IN',
                 '(SELECT messageId FROM ' + MessageMeta.tableName + ' WHERE key=\'relayAction\' AND (value=\'send\' OR value=\'broadcast\'))'
@@ -128,14 +130,16 @@ class MessagesController(__Controller):
         if destination is not None:
             if not destination.ip == self.LS.ip:
                 # Send the message if destination is not local
+                payload = message.serialize()
+                del payload['id']
                 (status, response) = self.RS.post('http://' + str(destination.ip) + ':' + str(destination.port), '/receiveMessage', payload)
-            # Mark message action as store if direct send, else as send if relayed
-            if relayTo is None:
-                self.upsertMessageMeta('relayAction', 'store', [message])
-            else:
-                # Should I still attempt direct send after relaying?
-                # Currently, yes, as it's best not to rely on other relay nodes
-                self.upsertMessageMeta('relayAction', 'send', [message])
+                # Mark message action as store if direct send, else as send if relayed
+                if relayTo is None:
+                    self.upsertMessageMeta('relayAction', 'store', [message])
+                else:
+                    # Should I still attempt direct send after relaying?
+                    # Currently, yes, as it's best not to rely on other relay nodes
+                    self.upsertMessageMeta('relayAction', 'send', [message])
         return
                 
 
@@ -195,11 +199,11 @@ class MessagesController(__Controller):
         if since is None:
             conditions = [
                 '(sender=' + self.DS.queryFormat(username),
-                'AND'
+                'AND',
                 'destination=' + self.DS.queryFormat(target) + ')',
                 'OR',
                 '(sender=' + self.DS.queryFormat(target),
-                'AND'
+                'AND',
                 'destination=' + self.DS.queryFormat(username) + ')'
             ]
             q = self.DS.select(Message, ' '.join(conditions))
@@ -210,13 +214,13 @@ class MessagesController(__Controller):
                 raise cherrypy.HTTPError(400, 'Malformed time.')
             conditions = [
                 '(sender=' + self.DS.queryFormat(username),
-                'AND'
+                'AND',
                 'destination=' + self.DS.queryFormat(target) + ')',
                 'OR',
                 '(sender=' + self.DS.queryFormat(target),
-                'AND'
+                'AND',
                 'destination=' + self.DS.queryFormat(username) + ')',
-                'AND'
+                'AND',
                 'id',
                 'IN',
                 '(SELECT messageId FROM ' + MessageMeta.tableName + ' WHERE key=\'recievedTime\' AND value > \'' + timeString + '\')'
@@ -232,7 +236,7 @@ class MessagesController(__Controller):
             inbound = q[i].destination == username
             try:
                 # Decrypt if encrypted
-                if int(q[i].encryption) > 0:
+                if q[i].encryption is not None and int(q[i].encryption) > 0:
                     for entryName, entryType in q[i].tableSchema:
                         if entryName not in self.noEncrypt:
                             self.SS.decrypt(getattr(q[i], entryName), q[i].encryption)
@@ -240,7 +244,7 @@ class MessagesController(__Controller):
                 # Run checks on inbound messages
                 if inbound:
                     # Check hashes of inbound
-                    if int(q[i].hashing) > 0:
+                    if q[i].hashing is not None and int(q[i].hashing) > 0:
                         if not self.SS.hash(q[i].message, q[i].hashing, sender=q[i].sender) == q[i].hash:
                             raise ValueError('Hashes do not match')
 
@@ -281,21 +285,21 @@ class MessagesController(__Controller):
         except AttributeError:
             raise cherrypy.HTTPError(400, 'JSON payload not sent.')
 
-        if not self.checkObjectKeys(request, ['destination', 'message', 'stamp']):
+        if not self.checkObjectKeys(request, ['destination', 'message']):
             raise cherrypy.HTTPError(400, 'Missing required parameters.')
 
         username = cherrypy.session['username']
         cherrypy.session.release_lock()
 
-        currentTime = datetime.utcnow()
-        recievedTime = currentTime.strftime('%Y-%m-%dT%H:%M:%S')
-        stamp = int(time.mktime(currentTime.timetuple()))
+        currentTime = gmtime()
+        recievedTime = strftime('%Y-%m-%dT%H:%M:%S', currentTime)
+        stamp = timegm(currentTime)
 
         # Check destination standards support list
         conditions = [
-            'key=\'standards',
+            'key=\'standards\'',
             'AND',
-            'userId'
+            'userId',
             'IN',
             '(SELECT id FROM ' + User.tableName + ' WHERE username=' + self.DS.queryFormat(destination) + ')'
         ]
@@ -326,7 +330,7 @@ class MessagesController(__Controller):
             username,
             destination,
             request['message'],
-            request['stamp'],
+            stamp,
             standard['encryption'],
             standard['hashing'],
             self.SS.hash(request['message']),
@@ -349,7 +353,7 @@ class MessagesController(__Controller):
         # Generate message metadata for relay
         msgMetaTime = MessageMeta(None, msgId, 'recievedTime', recievedTime)
         msgMetaStatus = MessageMeta(None, msgId, 'relayAction', 'broadcast')
-        self.DS.insertMany(msgMetaTime + msgMetaStatus)              
+        self.DS.insertMany(msgMetaTime + msgMetaStatus)
 
         msg = Message.deserialize(request)
 

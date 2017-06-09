@@ -10,4 +10,4 @@ class MessageMeta(__Model):
     ]
 
     def __init__(self, *args):
-        super(User, self).__init__(*args)
+        super(MessageMeta, self).__init__(*args)

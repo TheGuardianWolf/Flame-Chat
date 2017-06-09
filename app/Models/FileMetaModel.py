@@ -10,4 +10,4 @@ class FileMeta(__Model):
     ]
 
     def __init__(self, *args):
-        super(User, self).__init__(*args)
+        super(FileMeta, self).__init__(*args)

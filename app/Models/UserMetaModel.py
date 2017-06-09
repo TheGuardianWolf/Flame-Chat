@@ -10,4 +10,4 @@ class UserMeta(__Model):
     ]
 
     def __init__(self, *args):
-        super(User, self).__init__(*args)
+        super(UserMeta, self).__init__(*args)

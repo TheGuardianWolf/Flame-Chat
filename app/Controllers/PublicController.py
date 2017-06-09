@@ -44,9 +44,8 @@ class PublicController(__Controller):
 
         output = [
             '\n'.join(self.apiList),
-            #'Encoding ' + ' '.join(Globals.standards.encoding),
-            'Encryption ' + ' '.join(Globals.standards.encryption),
-            'Hashing ' + ' '.join(Globals.standards.hashing)
+            'Encryption ' + ' '.join(Globals.standards['encryption']),
+            'Hashing ' + ' '.join(Globals.standards['hashing'])
         ]
 
         return '\n'.join(output)
@@ -65,10 +64,8 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'stamp']):
+        if not self.checkObjectKeys(request, ['sender', 'destination', 'message', 'stamp']):
             return '1'
-
-        #request['encoding'] = unicode(encoding)
 
         recievedTime = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
 
@@ -77,17 +74,12 @@ class PublicController(__Controller):
         msgId = self.DS.insert(msg)
 
         msgMetaTime = MessageMeta(None, msgId, 'recievedTime', recievedTime)
-        msgMetaStatus = MessageMeta(None, msgId, 'relayAction', 'unsent')
+        msgMetaStatus = MessageMeta(None, msgId, 'relayAction', 'send')
 
-        self.DS.insertMany(msgMetaTime + msgMetaStatus)
+        self.DS.insertMany([msgMetaTime, msgMetaStatus])
 
         return '0'
-        
-    @cherrypy.tools.json_in()
-    @cherrypy.expose
-    def acknowledge(self):
-        raise cherrypy.HTTPError(404, 'Not implemented.')
-
+      
     @cherrypy.tools.json_in()
     @cherrypy.expose
     def getPublicKey(self):
@@ -96,13 +88,18 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.checkObjectKeys(self, request, ['sender', 'profile_username']):
+        if not self.checkObjectKeys(request, ['sender', 'profile_username']):
             return '1'
+        
+        try:
+            user = self.DS.select(User, 'username=' + self.DS.queryFormat(request['profile_username']))[0]
+        except IndexError:
+            return '3'
 
         responseObj = {}
 
         responseObj['error'] = 0
-        responseObj['pubKey'] = hexlify(self.SS.publicKey.exportKey('DER'))
+        responseObj['pubKey'] = user.publicKey
 
         cherrypy.response.headers['Content-Type'] = 'application/json'
         return dumps(responseObj)
@@ -115,16 +112,20 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.checkObjectKeys(self, request, ['sender', 'destination', 'message', 'encryption']):
+        if not self.checkObjectKeys(request, ['sender', 'destination', 'message', 'encryption']):
             return '1'
 
-        if Globals.standards.encryption.count(str(request['encryption'])) == 0:
+        if Globals.standards['encryption'].count(str(request['encryption'])) == 0:
             return '9'
 
         responseObj = {}
 
         responseObj['error'] = 0
-        responseObj['message'] = self.SS.privateKey.decrypt(request['message'])
+
+        try:
+            responseObj['message'] = self.SS.decrypt(request['message'], request['encryption'])
+        except:
+            return '9'
 
         cherrypy.response.headers['Content-Type'] = 'application/json'
         return dumps(responseObj)
@@ -150,16 +151,16 @@ class PublicController(__Controller):
         profileObj = profile.serialize()
         del profileObj['id']
         del profileObj['userId']
-        #profileObj['encoding'] = 0
         
         # Check requestor standards support list
         conditions = [
-            'key=\'standards',
+            'key=\'standards\'',
             'AND',
-            'userId'
+            'userId',
             'IN',
             '(SELECT id FROM ' + User.tableName + ' WHERE ip=' + self.DS.queryFormat(cherrypy.request.remote.ip) + ')'
         ]
+        
         q = self.DS.select(UserMeta, ' '.join(conditions))
 
         try:
@@ -168,7 +169,6 @@ class PublicController(__Controller):
                 # Assume we already sorted the values in the db on entry
                 standard = {
                     'encryption': standards.encryption[-1],
-                    #'encoding': standards.encoding[-1],
                     'hashing': standards.hashing[-1]
                 }
             else:
@@ -176,7 +176,6 @@ class PublicController(__Controller):
         except:
             standard = {
                 'encryption': '0',
-                #'encoding': '0',
                 'hashing': '0'
             }
 
@@ -201,7 +200,7 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.checkObjectKeys(self, request, ['sender', 'destination', 'file', 'filename', 'content_type', 'stamp', 'hashing']):
+        if not self.checkObjectKeys(request, ['sender', 'destination', 'file', 'filename', 'content_type', 'stamp', 'hashing']):
             return '1'
 
         f = File.deserialize(request)
@@ -225,7 +224,7 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.checkObjectKeys(self, request, ['requestor']):
+        if not self.checkObjectKeys(request, ['requestor']):
             return '1'
 
         try:
@@ -237,18 +236,13 @@ class PublicController(__Controller):
 
     @cherrypy.tools.json_in()
     @cherrypy.expose
-    def recieveGroupMessage(self):
-        raise cherrypy.HTTPError(404, 'Not implemented.')
-
-    @cherrypy.tools.json_in()
-    @cherrypy.expose
     def getStatus(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
             return '6'
 
         request = cherrypy.request.json
 
-        if not self.checkObjectKeys(self, request, ['profile_username']):
+        if not self.checkObjectKeys(request, ['profile_username']):
             return '1'
 
         responseObj = {}
@@ -264,13 +258,4 @@ class PublicController(__Controller):
         cherrypy.response.headers['Content-Type'] = 'application/json'
         return dumps(responseObj)
 
-    @cherrypy.tools.json_in()
-    @cherrypy.expose
-    def getList(self):
-        raise cherrypy.HTTPError(404, 'Not implemented.')
-
-    @cherrypy.tools.json_in()
-    @cherrypy.expose
-    def report(self):
-        raise cherrypy.HTTPError(404, 'Not implemented.')
 

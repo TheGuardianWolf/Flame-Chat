@@ -4,8 +4,11 @@ class __Model(object):
 
     def __init__(self, *args):
         for i in range(0, len(self.tableSchema)):
-            entry = self.tableSchema[i]
-            setattr(self, entry[0], args[i])
+            try:
+                entry = self.tableSchema[i]
+                setattr(self, entry[0], args[i])
+            except IndexError:
+                setattr(self, entry[0], None)
 
     def __eq__(self, other): 
         return self.__dict__ == other.__dict__
@@ -24,7 +27,7 @@ class __Model(object):
     @classmethod
     def deserialize(c, obj):
         def parseValue(value, dbValueType):
-            if value == 'NULL' or value == 'null':
+            if value is None or value == 'NULL' or value == 'null':
                 pyValue = None
             elif dbValueType.find('integer') > -1:
                 pyValue = int(value)

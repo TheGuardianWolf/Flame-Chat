@@ -1,5 +1,7 @@
 import cherrypy
 from datetime import datetime
+from time import gmtime, strftime
+from calendar import timegm
 from multiprocessing.pool import ThreadPool
 from app import Globals
 from app.Controllers.__Controller import __Controller
@@ -64,7 +66,7 @@ class FilesController(__Controller):
         for username in self.MS.data['pushRequests']:
             conditions = [
                 'destination=' + self.DS.queryFormat(username),
-                'AND'
+                'AND',
                 'id',
                 'IN',
                 '(SELECT fileId FROM ' + FileMeta.tableName + ' WHERE key=\'relayAction\' AND (value=\'send\' OR value=\'broadcast\'))'
@@ -112,6 +114,8 @@ class FilesController(__Controller):
         if destination is not None:
             if not destination.ip == self.LS.ip:
                 # Send the file if destination is not local
+                payload = file.serialize()
+                del payload['id']
                 (status, response) = self.RS.post('http://' + str(destination.ip) + ':' + str(destination.port), '/receiveFile', payload)
             # Mark file action as store if direct send, else as send if relayed
             if relayTo is None:
@@ -178,11 +182,11 @@ class FilesController(__Controller):
         if since is None:
             conditions = [
                 '(sender=' + self.DS.queryFormat(username),
-                'AND'
+                'AND',
                 'destination=' + self.DS.queryFormat(target) + ')',
                 'OR',
                 '(sender=' + self.DS.queryFormat(target),
-                'AND'
+                'AND',
                 'destination=' + self.DS.queryFormat(username) + ')'
             ]
             q = self.DS.select(File, ' '.join(conditions))
@@ -193,13 +197,13 @@ class FilesController(__Controller):
                 raise cherrypy.HTTPError(400, 'Malformed time.')
             conditions = [
                 '(sender=' + self.DS.queryFormat(username),
-                'AND'
+                'AND',
                 'destination=' + self.DS.queryFormat(target) + ')',
                 'OR',
                 '(sender=' + self.DS.queryFormat(target),
-                'AND'
+                'AND',
                 'destination=' + self.DS.queryFormat(username) + ')',
-                'AND'
+                'AND',
                 'id',
                 'IN',
                 '(SELECT fileId FROM ' + FileMeta.tableName + ' WHERE key=\'recievedTime\' AND value > \'' + timeString + '\')'
@@ -215,7 +219,7 @@ class FilesController(__Controller):
             inbound = q[i].destination == username
             try:
                 # Decrypt if encrypted
-                if int(q[i].encryption) > 0:
+                if q[i].encryption is not None and int(q[i].encryption) > 0:
                     for entryName, entryType in q[i].tableSchema:
                         if entryName not in self.noEncrypt:
                             self.SS.decrypt(getattr(q[i], entryName), q[i].encryption)
@@ -223,7 +227,7 @@ class FilesController(__Controller):
                 # Run checks on inbound files
                 if inbound:
                     # Check hashes of inbound
-                    if int(q[i].hashing) > 0:
+                    if q[i].hashing is not None and int(q[i].hashing) > 0:
                         if not self.SS.hash(q[i].file, q[i].hashing, sender=q[i].sender) == q[i].hash:
                             raise ValueError('Hashes do not match')
 
@@ -264,21 +268,21 @@ class FilesController(__Controller):
         except AttributeError:
             raise cherrypy.HTTPError(400, 'JSON payload not sent.')
 
-        if not self.checkObjectKeys(request, ['destination', 'file', 'filename', 'content_type', 'stamp']):
+        if not self.checkObjectKeys(request, ['destination', 'file', 'filename', 'content_type']):
             raise cherrypy.HTTPError(400, 'Missing required parameters.')
 
         username = cherrypy.session['username']
         cherrypy.session.release_lock()
 
-        currentTime = datetime.utcnow()
-        recievedTime = currentTime.strftime('%Y-%m-%dT%H:%M:%S')
-        stamp = int(time.mktime(currentTime.timetuple()))
+        currentTime = gmtime()
+        recievedTime = strftime('%Y-%m-%dT%H:%M:%S', currentTime)
+        stamp = timegm(currentTime)
 
         # Check destination standards support list
         conditions = [
-            'key=\'standards',
+            'key=\'standards\'',
             'AND',
-            'userId'
+            'userId',
             'IN',
             '(SELECT id FROM ' + User.tableName + ' WHERE username=' + self.DS.queryFormat(destination) + ')'
         ]
@@ -311,7 +315,7 @@ class FilesController(__Controller):
             request['file'],
             request['filename'],
             request['content_type'],
-            request['stamp'],
+            stamp,
             standard['encryption'],
             standard['hashing'],
             self.SS.hash(request['file']),

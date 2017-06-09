@@ -1,7 +1,7 @@
 from app import Globals
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
-from Crypto import Random
+from Crypto.Random.random import getrandbits
 import hashlib
 from binascii import hexlify, unhexlify
 
@@ -32,7 +32,7 @@ class SecureService(object):
             self.publicKey = self.privateKey.publickey()
 
             publicFile = open(publicKeyPath, 'w')
-            publicFile.write(self.publicKey.exportKey('PEM') )
+            publicFile.write(self.publicKey.exportKey('PEM'))
             publicFile.close()
             print 'Created new private key at ' + privateKeyPath
 
@@ -47,26 +47,27 @@ class SecureService(object):
         return m.hexdigest()
 
     def hash(self, raw, standard):
+        raw = str(unicode(raw).encode('utf-8'))
         standard = unicode(standard)
 
-        if standard not in Globals.standards.hashing:
+        if standard not in Globals.standards['hashing']:
             raise ValueError('Standard unsupported')
 
         if standard == '0':
             return None
         elif standard == '1':
             m = hashlib.sha256()
-            m.update(str(raw))
+            m.update(raw)
         elif standard == '3':
             m = hashlib.sha512()
-            m.update(str(raw))
+            m.update(raw)
         
         return m.hexdigest()
 
     def decrypt(self, enc, standard):
         standard = unicode(standard)
 
-        if standard not in Globals.standards.encryption:
+        if standard not in Globals.standards['encryption']:
             raise ValueError('Standard unsupported')
 
         if standard == '3':
@@ -74,20 +75,19 @@ class SecureService(object):
 
     def encrypt(self, raw, standard, key=None):
         standard = unicode(standard)
-        raw = unicode(raw)
+        raw = str(unicode(raw).encode('utf-8'))
 
-        if standard not in Globals.standards.encryption:
+        if standard not in Globals.standards['encryption']:
             raise ValueError('Standard unsupported')
 
         if standard == '3':
             if key is None:
                 raise TypeError('Key cannot be NoneType for this standard.')
-            if len(raw) > 128:
-                raise ValueError('Size of raw is bigger than 128 bytes')
-            return unicode(hexlify(RSA.importKey(key).encrypt(raw.encode('ascii', 'replace'))))
+            pubKey = RSA.importKey(unhexlify(key))
+            return unicode(hexlify(pubKey.encrypt(raw, getrandbits(32))[0]))
 
     def serverEncrypt(self, raw):
-        raw = str(raw)
+        raw = str(unicode(raw).encode('utf-8'))
         raw += Globals.serverAESPadding * (Globals.serverAESBlockSize - (len(raw) % Globals.serverAESBlockSize))
         iv = Random.new().read(16)
         cipher = AES.new(Globals.serverKey, AES.MODE_CBC, iv)

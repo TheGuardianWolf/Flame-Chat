@@ -40,7 +40,7 @@ class StreamController(__Controller):
         elif self.checkTiming(memoryData, 'lastUserInfoQuery', 10):
             self.__users.userInfoQuery(sessionData['username'])
 
-        elif pulled not in sessionData:
+        elif 'pulled' not in sessionData:
             self.__users.requestRetrieval(sessionData['username'])
             return True
 
