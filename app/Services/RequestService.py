@@ -1,10 +1,14 @@
 from app import Globals
+from socket import setdefaulttimeout, timeout as TimeoutError
 from urllib import urlencode
 from urllib2 import urlopen, HTTPError, URLError, Request
 from httplib import HTTPException
 from json import dumps
 
 class RequestService(object):
+    def __init__(self):
+        setdefaulttimeout(10)
+
     def get(self, url, endpoint, payload=None, timeout=None):
         try:
             requestUrl = url + endpoint
@@ -15,11 +19,13 @@ class RequestService(object):
             else:
                 response = urlopen(requestUrl)
             return (200, response)
-        except HTTPError, e:
+        except HTTPError as e:
             return (e.code, None)
-        except URLError, e:
+        except URLError as e:
             return (e.reason.errno, None)
-        except HTTPException, e:
+        except TimeoutError as e:
+            return (504, None)
+        except HTTPException as e:
             return (e.reason.errno, None)
 
     def post(self, url, endpoint, payload, timeout=None, json=True):

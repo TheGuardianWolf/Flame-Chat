@@ -21,16 +21,19 @@ class StatusController(__Controller):
             payload = {
                 'profile_username': user.username
             }
-            (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/getStatus', payload)
+            (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/getStatus', payload, timeout=5)
             if status == 200:
-                return (user, loads(response.read())['status'])
-            else:
-                return (user, 'offline')
+                try:
+                    return (user, loads(response.read())['status'])
+                except KeyError:
+                    pass
+
         responses = pool.map(checkStatus, statusQueryList)
 
         for user, status in responses:
             try:
-                self.MS.data['userStatus'][user.username] = status
+                if status is not None:
+                    self.MS.data['userStatus'][user.username] = status
             except KeyError:
                 self.MS.data['userStatus'] = {}
                 self.MS.data['userStatus'][user.username] = status

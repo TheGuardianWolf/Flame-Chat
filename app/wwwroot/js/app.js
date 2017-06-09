@@ -16,41 +16,29 @@ var flame = angular.module('flame', [
     function( $compileProvider, $routeProvider, $locationProvider, poller ) {
         $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|data|ms-appx):/);
 
-        $locationProvider.html5Mode(true);
+        // $locationProvider.html5Mode(true);
         
         poller.smart = true;
 
         $routeProvider
         .when('/', {
             templateUrl : 'views/auth.html.txt',
-            controller  : 'authController',
-            resolve: {
-                init: null
-            }
+            controller  : 'authController'
         })
 
         .when('/conversations', {
             templateUrl : 'views/conversations.html.txt',
-            controller  : 'conversationsController',
-            resolve: {
-                init: null
-            }
+            controller  : 'conversationsController'
         })
 
         .when('/contacts', {
             templateUrl: 'views/conversations.html.txt',
-            controller: 'contactsController',
-            resolve: {
-                init: null
-            }
+            controller: 'contactsController'
         })
 
         .when('/profile', {
             templateUrl: 'views/profile.html.txt',
-            controller: 'profileController',
-            resolve: {
-                init: null
-            }
+            controller: 'profileController'
         });
     }
 ]);

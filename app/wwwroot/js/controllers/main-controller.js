@@ -1,10 +1,9 @@
 flame.controller('mainController', [
     '$scope', 
     '$http', 
-    '$location', 
-    '$resource', 
+    '$location',
     'poller', 
-    function ($scope, $http, $location, $resource, poller) {
+    function ($scope, $http, $location, poller) {
         $scope.state = {
             loading: false,
             authenticated: false,
@@ -48,8 +47,17 @@ flame.controller('mainController', [
         };
 
         var fetch = function(dataType, method, delay, args) {
+            if (args.length > 0) {
+                args[0].ignoreLoadingBar = true;
+            }
+            else {
+                args.push({
+                    ignoreLoadingBar: true
+                });
+            }
+
             var request = poller.get(apiRoute([dataType, method]), {
-                action: method.toUpperCase(),
+                action: method,
                 delay: delay,
                 argumentsArray: args
             });
@@ -62,8 +70,10 @@ flame.controller('mainController', [
 
         var startCycles = function() {
             fetchUsers = fetch('users', 'get', 5000, []);
-            fetchProfiles = fetch('profiles', 'get', 5000, []);
+            fetchProfiles = fetch('profiles', 'get', 30000, []);
             fetchStatus = fetch('status', 'get', 5000, []);
         };
+
+        $scope.startCycles = startCycles;
     }
 ]);

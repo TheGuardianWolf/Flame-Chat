@@ -1,5 +1,5 @@
 import cherrypy
-from time import gmtime, strftime
+from time import gmtime, strftime, time as getTime
 from calendar import timegm
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
@@ -291,9 +291,9 @@ class MessagesController(__Controller):
         username = cherrypy.session['username']
         cherrypy.session.release_lock()
 
-        currentTime = gmtime()
-        recievedTime = strftime('%Y-%m-%dT%H:%M:%S', currentTime)
-        stamp = timegm(currentTime)
+        currentTime = getTime()
+        recievedTime = strftime('%Y-%m-%dT%H:%M:%S', gmtime(currentTime))
+        stamp = "{0:.3f}".format(currentTime)
 
         # Check destination standards support list
         conditions = [

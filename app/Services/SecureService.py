@@ -1,7 +1,7 @@
 from app import Globals
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
-from Crypto.Random.random import getrandbits
+from Crypto import Random
 import hashlib
 from binascii import hexlify, unhexlify
 
@@ -84,7 +84,7 @@ class SecureService(object):
             if key is None:
                 raise TypeError('Key cannot be NoneType for this standard.')
             pubKey = RSA.importKey(unhexlify(key))
-            return unicode(hexlify(pubKey.encrypt(raw, getrandbits(32))[0]))
+            return unicode(hexlify(pubKey.encrypt(raw, Random.new().read(16))[0]))
 
     def serverEncrypt(self, raw):
         raw = str(unicode(raw).encode('utf-8'))

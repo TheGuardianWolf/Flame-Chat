@@ -125,7 +125,7 @@ class UsersController(__Controller):
         pool = ThreadPool(processes=50)
         # Function used for threadpool
         def checkReachable(user):
-            return self.RS.get('http://' + str(user.ip) + ':' + str(user.port), '/listAPI', timeout=1)
+            return self.RS.get('http://' + str(user.ip) + ':' + str(user.port), '/listAPI', timeout=3)
         responses = pool.map(checkReachable, potentiallyReachable)
 
         handshakeQueryList = []
@@ -155,16 +155,21 @@ class UsersController(__Controller):
                     self.DS.insert(apiMeta)
 
                 # Parse standards support list
-                standardsList = data[-3:]
                 try:
+                    standardsList = data[-3:]
+                    
                     standards = {
-                        #'encoding': sorted(list(set(standardsList[0]) & set(Globals.standards['encoding']))),
                         'encryption': sorted(list(set(standardsList[0]) & set(Globals.standards['encryption']))),
                         'hashing': sorted(list(set(standardsList[1]) & set(Globals.standards['hashing'])))
                     }
+
+                    if '0' not in standards['encryption']:
+                        standards['encryption'].insert(0, '0')
+
+                    if '0' not in encryptionStandards:
+                        encryptionStandards.insert(0, '0')
                 except:
                     standards = {
-                        #'encoding': ['0'],
                         'encryption': ['0'],
                         'hashing': ['0']
                     }
@@ -224,7 +229,7 @@ class UsersController(__Controller):
                             'destination': user.username,
                             'encryption': standard
                         }
-                        (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/handshake', payload, timeout=1)
+                        (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/handshake', payload, timeout=5)
                         remoteMessage = loads(response.read())['message']
                         if not status == 200 or not remoteMessage.decode('utf-8', 'replace') == localMessage:
                             raise AssertionError('Handshake not successful')
@@ -249,7 +254,7 @@ class UsersController(__Controller):
 
         self.DS.updateMany(standardsMetaList)
 
-    def requestRetrieval(username):
+    def requestRetrieval(self, username):
         try:
             reachableUsers = self.MS.data['reachableUsers']
         except KeyError:
@@ -263,7 +268,7 @@ class UsersController(__Controller):
         pool = ThreadPool(processes=50)
 
         def retrieveMessages(user):
-            (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/retrieveMessages', {'username': username}, timeout=1)
+            (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/retrieveMessages', {'username': username}, timeout=5)
 
         pool.map(retrieveMessages, retrieveFrom)
 
@@ -288,7 +293,7 @@ class UsersController(__Controller):
 
         if not streamEnabled:
             pull = False
-            if pulled not in cherrypy.session:
+            if 'pulled' not in cherrypy.session:
                 cherrypy.session['pulled'] = True
                 pull = True
             cherrypy.session.release_lock()
@@ -297,7 +302,7 @@ class UsersController(__Controller):
             if self.checkTiming(self.MS.data, 'lastUserInfoQuery', 10):
                 self.userInfoQuery(username)
             if pull:
-                requestRetrieval(username)
+                self.requestRetrieval(username)
 
         responseObj = {
             'reachable': [],
@@ -329,11 +334,11 @@ class UsersController(__Controller):
             unknownUsers = self.DS.select(User)
 
         for user in reachableUsers:
-            responseObj['reachable'].append(user.deserialize())
+            responseObj['reachable'].append(user.serialize())
         for user in unreachableUsers:
-            responseObj['unreachable'].append(user.deserialize())
+            responseObj['unreachable'].append(user.serialize())
         for user in unknownUsers:
-            responseObj['unknown'].append(user.deserialize())
+            responseObj['unknown'].append(user.serialize())
 
         return responseObj
 

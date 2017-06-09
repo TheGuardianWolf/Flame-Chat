@@ -47,7 +47,7 @@ class StreamController(__Controller):
         elif self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
             self.__status.userStatusQuery()
 
-        elif self.checkTiming(memoryData, 'lastUserProfileQuery', 10):
+        elif self.checkTiming(memoryData, 'lastUserProfileQuery', 60):
             self.__profiles.userProfileQuery(sessionData['username'])
         
         elif self.checkTiming(memoryData, 'lastRelayMessageSend', 300):

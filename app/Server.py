@@ -25,7 +25,7 @@ class Server(object):
         }
 
         self.staticConfig = {
-            '/static': {
+            '/': {
                 'tools.staticdir.on': True,
                 'tools.staticdir.dir': Globals.webRoot,
                 'tools.staticdir.index': 'index.html'

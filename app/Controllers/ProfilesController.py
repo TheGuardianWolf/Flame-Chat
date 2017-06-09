@@ -1,5 +1,6 @@
 import cherrypy
 from datetime import datetime
+from multiprocessing.pool import ThreadPool
 from app import Globals
 from app.Controllers.__Controller import __Controller
 from app.Models.ProfileModel import Profile
@@ -49,7 +50,7 @@ class ProfilesController(__Controller):
                     'profile_username': user.username,
                     'sender': username
                 }
-                (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/getProfile', payload)
+                (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/getProfile', payload, timeout=5)
                 if status == 200:
                     return (user, loads(response.read()))
                 else:
@@ -68,7 +69,7 @@ class ProfilesController(__Controller):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get(self, target):
+    def get(self):
         if (cherrypy.request.remote.ip != '127.0.0.1'):
             raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
         if not self.isAuthenticated():
@@ -82,7 +83,7 @@ class ProfilesController(__Controller):
         if not streamEnabled:
             username = cherrypy.session['username']
             cherrypy.session.release_lock()
-            if self.checkTiming(self.MS.data, 'lastUserProfileQuery', 10):
+            if self.checkTiming(self.MS.data, 'lastUserProfileQuery', 60):
                 self.userProfileQuery(username)
 
         profiles = self.DS.select(Profile)
