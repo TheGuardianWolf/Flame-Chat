@@ -7,21 +7,29 @@ flame.controller('mainController', [
         $scope.state = {
             loading: false,
             authenticated: false,
-            sidebarCompact: true
+            sidebarCompact: true,
+            activePath: ''
         };
 
         $scope.data = {
+            currentUser: {
+                username: '',
+                password: ''
+            },
             users: [],
             profiles: [],
-            status: []
+            status: [],
+            files: [],
+            messages: []
         };
 
         $scope.goto = function(path) {
             $location.path(path);
+            $scope.state.activePath = path;
         };
 
         if ($scope.state.authenticated === false) {
-            $location.path('/');
+            $scope.goto('');
         }
 
         $scope.toggleSidebar = function () {
@@ -113,24 +121,24 @@ flame.controller('mainController', [
 
             var m = fetchMessages();
             m.promise.then(null, null, function(response) {
-                lastFetch.messages = String(Date.now() / 1000);
                 if (lastFetch.messages !== null) {
-                    Array.push.apply($scope.data.message, response.data);
+                    $scope.data.messages.push.apply($scope.data.messages, response.data);
                 }
                 else {
                     $scope.data.messages = response.data;
                 }
+                lastFetch.messages = String(Date.now() / 1000);
             });
 
             var f = fetchFiles();
             f.promise.then(null, null, function(response) {
-                lastFetch.files = String(Date.now() / 1000);
-                if (lastFetch.messages !== null) {
-                    Array.push.apply($scope.data.files, response.data);
+                if (lastFetch.files !== null) {
+                    $scope.data.files.push.apply($scope.data.files, response.data);
                 }
                 else {
                     $scope.data.files = response.data;
                 }
+                lastFetch.files = String(Date.now() / 1000);
             });
 
             return [m, f];

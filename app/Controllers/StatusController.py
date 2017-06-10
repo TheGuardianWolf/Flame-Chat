@@ -25,8 +25,8 @@ class StatusController(__Controller):
             if status == 200:
                 try:
                     return (user, loads(response.read())['status'])
-                except KeyError:
-                    pass
+                except (KeyError, TypeError):
+                    return (user, None)
 
         responses = pool.map(checkStatus, statusQueryList)
 

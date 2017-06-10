@@ -9,7 +9,8 @@ var flame = angular.module('flame', [
   'ngAria',
   'ngTouch',
   'angular-loading-bar',
-  'emguo.poller'
+  'emguo.poller',
+  'ngFileUpload'
 ])
 .config( [
     '$compileProvider', '$routeProvider', '$locationProvider', 'pollerConfig',
@@ -31,10 +32,10 @@ var flame = angular.module('flame', [
             controller  : 'conversationsController'
         })
 
-        .when('/contacts', {
-            templateUrl: 'views/conversations.html.txt',
-            controller: 'contactsController'
-        })
+        // .when('/contacts', {
+        //     templateUrl: 'views/conversations.html.txt',
+        //     controller: 'contactsController'
+        // })
 
         .when('/profile', {
             templateUrl: 'views/profile.html.txt',

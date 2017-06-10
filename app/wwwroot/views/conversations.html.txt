@@ -1,26 +1,28 @@
 <div class="conversations wrapper">
-    <div class="list-pane">
-        <div class="list-wrapper" ng-repeat="category in listView() track by category.title">
-            <div class="list-title">
-                <h3>{{category.title}}</h3>
+    <div class="listview-outlook list-pane bg-dark" data-role="listview">
+        <div class="list-group list-wrapper" ng-repeat="category in listView track by category.title">
+            <span class="list-group-toggle fg-white bg-grayDark">{{category.title}}</span>
+            <div class="list-group-content">
+                <div class="list bg-hover-grayDark" ng-repeat="model in category.models track by model.id" ng-click="selectModel(model)">
+                    <div class="list-content">
+                        <div class="list-icon" style="background-image:url('{{model.picture}}')">
+                        </div>
+                        <div class="list-content-text">
+                            <div class="list-title">
+                                {{model.displayName}}
+                            </div>
+                            <div class="list-subtitle">
+                                {{model.username}}
+                            </div>
+                            <div class="list-remark">
+                                {{model.status}}
+                            </div>
+                        </div>
+                        <div class="alert" ng-show="model.alert">
+                        </div>
+                    </div>
+                </div>
             </div>
-            <ul class="list">
-                <li class="item" ng-repeat="model in category.models track by user.id" ng-click="selectModel(model)">
-                    <div class="icon" style="background-image:url('{{model.picture}}')">
-                    </div>
-                    <div class="name">
-                        {{model.displayName}}
-                        <small>
-                            {{model.username}}
-                        </small>
-                    </div>
-                    <div class="status">
-                        {{model.status}}
-                    </div>
-                    <div class="alert" ng-show="model.alert">
-                    </div>
-                </li>
-            </ul>
         </div>
     </div>
     <div class="content-pane">
@@ -28,22 +30,32 @@
             <div class="content-header">
                 <div class="icon" style="background-image:url('{{selectedModel.model.picture}}')">
                 </div>
-                <div class="title">
-                    <h3>{{selectedModel.model.displayName}}</h3>
-                </div>
-                <div class="status">
-                    {{selectedModel.model.status}}
+                <div class="text">
+                    <div class="title">
+                        <h3>{{selectedModel.model.displayName}} <small>{{selectedModel.model.username}}</small></h3>
+                    </div>
+                    <div class="description">
+                        {{selectedModel.model.description}}
+                        <div>
+                            <div class="position">
+                                {{selectedModel.model.position}}
+                            </div>
+                            <div class="status">
+                                Currently {{selectedModel.model.status}} at {{selectedModel.model.location}}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="content">
+            <div class="content-body">
                 <div class="content-list-wrapper">
-                    <ol class="content-list">
+                    <ol class="content-list" ng-hide="selectedModel.content.length === 0">
                         <li class="item" ng-repeat="model in selectedModel.content track by model.ngId">
                             <div class="bubble">
-                                <span class="message" ng-show="typeof model.message === 'string'">
+                                <span class="message" ng-show="model.type === 'message'">
                                     {{model.message}}
                                 </span>
-                                <span class="file" ng-show="typeof model.file === 'string'">
+                                <span class="file" ng-show="model.type === 'file'">
                                     <a href="{{model.href}}" target="_blank">{{model.filename}}</a>
                                 </span>
                             </div>
@@ -57,12 +69,29 @@
                 </div>
             </div>
             <div class="content-footer">
-                <div class="new-message">
-                    <input type="text" name="message"/>
-                    <input type="file" name="attachment"/>
-                    <button class="emote" data-emote-id="0" ng-click="insertEmote(this)">🔥</button>
-                    <button class="send" type="submit" ng-click="sendMessage()"></button>
-                </div>
+                <form class="new-message" ng-submit="sendMessage()">
+                    <div class="input-control text" data-role="input">
+                        <input type="text" name="message" ng-model="entry.message"/>
+                    </div>
+                     <div class="button-group">
+                        <button type="button" ngf-drop ngf-select ng-model="entry.file"
+                            ngf-drag-over-class="'info block-shadow-info text-shadow'" ngf-multiple="false" ngf-allow-dir="false"
+                            accept="*/*" ngf-pattern="'*/*'" class="button cycle-button file">
+                            <span class="mif-folder"></span>
+                        </button>
+                        <div ngf-no-file-drop>
+                            <button type="button" class="button cycle-button file">
+                                <span class="mif-folder"></span>
+                            </button>
+                        </div>
+                        <button type="button" class="button cycle-button emote" ng-click="insertEmote($event)">
+                            🔥
+                        </button>
+                        <button class="button primary cycle-button send" type="submit" value="Submit">
+                            <span class="mif-paper-plane"></span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

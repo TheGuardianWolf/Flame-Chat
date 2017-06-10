@@ -57,14 +57,10 @@ flame.controller('authController', ['$scope', '$http', '$location', 'poller', fu
         $scope.startCycles();
     };
 
-    $scope.login = {};
-
-    $scope.login.data = {
-        username: '',
-        password: ''
-    };
-
-    $scope.login.submit = function() {
-        authenticate($scope.login.data.username, $scope.login.data.password);
+    $scope.login = function() {
+        authenticate(
+            $scope.data.currentUser.username, 
+            $scope.data.currentUser.password
+        );
     };
 }]);

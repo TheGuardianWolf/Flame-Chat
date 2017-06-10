@@ -30,7 +30,7 @@
         <![endif]-->
     <div class="splash bg-darker" ng-show="state.loading">
         <h1 class="fg-white">Loading...</h1>
-        <div data-role="preloader" data-type="ring"></div>
+        <div data-role="preloader" data-type="cucle"></div>
     </div>
 
     <!-- Begin top bar -->
@@ -46,20 +46,14 @@
                 <span class="mif-menu icon"></span>
             </a>
         </li>
-        <li>
-            <a href="#" ng-click="goto('conversations')">
+        <li ng-class="state.activePath === 'conversations' ? 'active' : ''">
+            <a href="" ng-click="goto('conversations')">
                 <span class="mif-bubbles icon"></span>
                 <span class="title">Conversations</span>
             </a>
         </li>
-        <li>
-            <a href="#" ng-click="goto('contacts')">
-                <span class="mif-users icon"></span>
-                <span class="title">Contacts</span>
-            </a>
-        </li>
-        <li>
-            <a href="#" ng-click="goto('profile')">
+        <li ng-class="state.activePath === 'profile' ? 'active' : ''">
+            <a href="" ng-click="goto('profile')">
                 <span class="mif-profile icon"></span>
                 <span class="title">Profile</span>
             </a>
@@ -69,9 +63,6 @@
 
     <!-- Routed page begin -->
     <div class="frame bg-black" ng-view>
-
-
-
     </div>
     <!-- Routed page end -->
 
@@ -86,12 +77,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.4/angular-touch.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.9.0/loading-bar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-poller/0.4.5/angular-poller.js"></script>
+    <script src="https://raw.githubusercontent.com/katebe/angular-presence/0.2.3/angular-presence.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/danialfarid-angular-file-upload/12.2.13/ng-file-upload.min.js"></script>
 
     <script src="js/functions.js"></script>
     <script src="js/app.js"></script>
     <script src="js/controllers/main-controller.js"></script>
     <script src="js/controllers/auth-controller.js"></script>
-    <script src="js/controllers/contacts-controller.js"></script>
+    <!--<script src="js/controllers/contacts-controller.js"></script>-->
     <script src="js/controllers/conversations-controller.js"></script>
     <script src="js/controllers/profile-controller.js"></script>
 </body>

@@ -138,8 +138,9 @@ class UsersController(__Controller):
 
         # Sort responses
         for i, response in enumerate(responses):
+            responseUser = potentiallyReachable[i]
             if response[0] == 200:
-                reachableUsers.append(potentiallyReachable[i])
+                reachableUsers.append(responseUser)
                 data = response[1].read().splitlines()
                 # Parse api support list
                 apiList = data[:-3]
@@ -152,9 +153,9 @@ class UsersController(__Controller):
                     except IndexError:
                         continue
                 
-                apiMeta = UserMeta(None, potentiallyReachable[i].id, 'api', dumps(apiList))
+                apiMeta = UserMeta(None, responseUser.id, 'api', dumps(apiList))
                 # Check if entry exists
-                q = self.DS.select(UserMeta, 'userId=' + self.DS.queryFormat(potentiallyReachable[i].id) + ' AND key=\'api\'')
+                q = self.DS.select(UserMeta, 'userId=' + self.DS.queryFormat(responseUser.id) + ' AND key=\'api\'')
                 if len(q) > 0:
                     apiMeta.id = q[0].id
                     self.DS.update(apiMeta)
@@ -166,20 +167,22 @@ class UsersController(__Controller):
                     standardsList = data[-2:]
                     
                     standards = {
-                        'encryption': standardsList[0],
-                        'hashing': standardsList[1]
+                        'encryption': standardsList[0].split(' '),
+                        'hashing': standardsList[1].split(' ')
                     }
 
-                    #standards = {
-                    #    'encryption': sorted(list(set(standardsList[0]) & set(Globals.standards['encryption']))),
-                    #    'hashing': sorted(list(set(standardsList[1]) & set(Globals.standards['hashing'])))
-                    #}
+                    for standard in standards.itervalues():
+                        for i in range(0, len(standard)):
+                            standard[i].strip(',')
+
+                    standards['encryption'] = sorted(list(set(standards['encryption']) & set(Globals.standards['encryption'])))
+                    standards['hashing'] = sorted(list(set(standards['hashing']) & set(Globals.standards['hashing'])))
 
                     if '0' not in standards['encryption']:
                         standards['encryption'].insert(0, '0')
 
-                    if '0' not in encryptionStandards:
-                        encryptionStandards.insert(0, '0')
+                    if '0' not in standards['hashing']:
+                        standards['hashing'].insert(0, '0')
 
                 except (KeyError, IndexError, ValueError):
                     standards = {
@@ -192,7 +195,7 @@ class UsersController(__Controller):
                 # Find destination's encryption key and run test
                 #if int(standards['encryption'][-1]) > 2:
                 #    try:
-                #        encryptionKey = potentiallyReachable[i].publicKey
+                #        encryptionKey = responseUser.publicKey
                 #        self.SS.encrypt('a', '3', key=encryptionKey)
                 #    except (KeyError, ValueError, IndexError):
                 #        workingEncryption = []
@@ -201,9 +204,9 @@ class UsersController(__Controller):
                 #                workingEncryption.append(unicode(i))
                 #        standards['encryption'] = workingEncryption
 
-                standardsMeta = UserMeta(None, potentiallyReachable[i].id, 'standards', dumps(standards))
+                standardsMeta = UserMeta(None, responseUser.id, 'standards', dumps(standards))
                 # Check if entry exists
-                q = self.DS.select(UserMeta, 'userId=' + self.DS.queryFormat(potentiallyReachable[i].id) + ' AND key=\'standards\'')
+                q = self.DS.select(UserMeta, 'userId=' + self.DS.queryFormat(responseUser.id) + ' AND key=\'standards\'')
                 if len(q) > 0:
                     standardsMeta.id = q[0].id
                     self.DS.update(standardsMeta)
@@ -216,12 +219,12 @@ class UsersController(__Controller):
                 #    handshakeQueryList.append((potentiallyReachable[i], standardsMeta))
 
                 if '/getStatus' in apiList:
-                    statusQueryList.append(potentiallyReachable[i])
+                    statusQueryList.append(responseUser)
 
                 if '/retrieveMessages' in apiList:
-                    retrieveMessagesList.append(potentiallyReachable[i])
+                    retrieveMessagesList.append(responseUser)
             else:
-                unreachableUsers.append(potentiallyReachable[i])
+                unreachableUsers.append(responseUser)
         
         self.MS.data['statusQueryList'] = statusQueryList
         self.MS.data['retrieveMessages'] = retrieveMessagesList
