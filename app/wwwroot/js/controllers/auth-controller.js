@@ -54,7 +54,6 @@ flame.controller('authController', ['$scope', '$http', '$location', 'poller', fu
 
     var afterAuthenticate = function() {
         $scope.goto('conversations');
-        $scope.streamConnect();
         $scope.startCycles();
     };
 

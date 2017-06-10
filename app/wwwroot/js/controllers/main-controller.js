@@ -11,11 +11,9 @@ flame.controller('mainController', [
         };
 
         $scope.data = {
-            users: []
-        };
-
-        $scope.cycle = {
-            fetchUsers : null
+            users: [],
+            profiles: [],
+            status: []
         };
 
         $scope.goto = function(path) {
@@ -67,10 +65,83 @@ flame.controller('mainController', [
             return request;
         };
 
+        var fetchConversations = function(delay) {
+            var lastFetch = {
+                messages: null,
+                files: null
+            };
+            
+            var fetchMessages = function() {
+                return poller.get(apiRoute(['messages', 'get']), {
+                    action: 'get',
+                    delay: delay,
+                    argumentsArray: function() {
+                        var args = [{
+                            ignoreLoadingBar: true
+                        }];
+
+                        if (lastFetch.messages !== null) {
+                            args[0].params = {
+                                since: lastFetch.messages
+                            };
+                        }
+
+                        return args;
+                    }
+                });
+            };
+            
+            var fetchFiles = function() {
+                return poller.get(apiRoute(['files', 'get']), {
+                    action: 'get',
+                    delay: delay,
+                    argumentsArray: function() {
+                        var args = [{
+                            ignoreLoadingBar: true
+                        }];
+
+                        if (lastFetch.files !== null) {
+                            args[0].params = {
+                                since: lastFetch.files
+                            };
+                        }
+
+                        return args;
+                    }
+                });
+            };
+
+            var m = fetchMessages();
+            m.promise.then(null, null, function(response) {
+                lastFetch.messages = String(Date.now() / 1000);
+                if (lastFetch.messages !== null) {
+                    Array.push.apply($scope.data.message, response.data);
+                }
+                else {
+                    $scope.data.messages = response.data;
+                }
+            });
+
+            var f = fetchFiles();
+            f.promise.then(null, null, function(response) {
+                lastFetch.files = String(Date.now() / 1000);
+                if (lastFetch.messages !== null) {
+                    Array.push.apply($scope.data.files, response.data);
+                }
+                else {
+                    $scope.data.files = response.data;
+                }
+            });
+
+            return [m, f];
+        };
+
         var startCycles = function() {
-            fetchUsers = fetch('users', 'get', 5000, []);
-            fetchProfiles = fetch('profiles', 'get', 30000, []);
-            fetchStatus = fetch('status', 'get', 5000, []);
+            $scope.streamConnect();
+            var userCycle = fetch('users', 'get', 5000, []);
+            var profileCycle = fetch('profiles', 'get', 30000, []);
+            var statusCycle = fetch('status', 'get', 5000, []);
+            var conversationCycle = fetchConversations(1000);
         };
 
         $scope.startCycles = startCycles;

@@ -197,35 +197,20 @@ class MessagesController(__Controller):
                 self.relayMessages()
 
         if since is None:
-            #conditions = [
-            #    '(sender=' + self.DS.queryFormat(username),
-            #    'AND',
-            #    'destination=' + self.DS.queryFormat(target) + ')',
-            #    'OR',
-            #    '(sender=' + self.DS.queryFormat(target),
-            #    'AND',
-            #    'destination=' + self.DS.queryFormat(username) + ')'
-            #]
-            q = self.DS.select(Message, 'destination=' + self.DS.queryFormat(username))
+            conditions = [
+                'sender=' + self.DS.queryFormat(username),
+                'OR',
+                'destination=' + self.DS.queryFormat(username)
+            ]
+            q = self.DS.select(Message, ' '.join(conditions))
         else:
             try:
                 timeSince = timegm(gmtime(float(since)))
             except ValueError:
                 raise cherrypy.HTTPError(400, 'Malformed time.')
-            #conditions = [
-            #    '(sender=' + self.DS.queryFormat(username),
-            #    'AND',
-            #    'destination=' + self.DS.queryFormat(target) + ')',
-            #    'OR',
-            #    '(sender=' + self.DS.queryFormat(target),
-            #    'AND',
-            #    'destination=' + self.DS.queryFormat(username) + ')',
-            #    'AND',
-            #    'id',
-            #    'IN',
-            #    '(SELECT messageId FROM ' + MessageMeta.tableName + ' WHERE key=\'recievedTime\' AND value > \'' + timeString + '\')'
-            #]
             conditions = [
+                'sender=' + self.DS.queryFormat(username),
+                'OR',
                 'destination=' + self.DS.queryFormat(username),
                 'AND',
                 'id',
