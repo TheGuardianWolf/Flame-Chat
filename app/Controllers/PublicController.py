@@ -1,4 +1,5 @@
 import cherrypy
+from time import time as getTime
 from datetime import datetime
 from json import loads, dumps
 from binascii import hexlify
@@ -67,7 +68,7 @@ class PublicController(__Controller):
         if not self.checkObjectKeys(request, ['sender', 'destination', 'message', 'stamp']):
             return '1'
 
-        recievedTime = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+        recievedTime = '{0:.3f}'.format(getTime())
 
         msg = Message.deserialize(request)
 
@@ -200,14 +201,16 @@ class PublicController(__Controller):
 
         request = cherrypy.request.json
 
-        if not self.checkObjectKeys(request, ['sender', 'destination', 'file', 'filename', 'content_type', 'stamp', 'hashing']):
+        if not self.checkObjectKeys(request, ['sender', 'destination', 'file', 'filename', 'content_type', 'stamp']):
             return '1'
+
+        recievedTime = '{0:.3f}'.format(getTime())
 
         f = File.deserialize(request)
 
         fId = self.DS.insert(f)
 
-        fMetaTime = FileMeta(None, fID, 'recievedTime', recievedTime)
+        fMetaTime = FileMeta(None, fId, 'recievedTime', recievedTime)
         fMetaStatus = FileMeta(None, fId, 'relayAction', 'unsent')
 
         self.DS.insertMany(fMetaTime + fMetaStatus)

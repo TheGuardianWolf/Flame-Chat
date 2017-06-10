@@ -56,7 +56,7 @@ class UsersController(__Controller):
         (status, response) = self.RS.get(Globals.loginRoot, '/getList', payload)
 
         if response is not None:
-            responseText = response.read();
+            responseText = response.read()
             try:
                 json = loads(responseText)
             except ValueError:
@@ -102,6 +102,11 @@ class UsersController(__Controller):
         
         potentiallyReachable = []
 
+        if self.LS.online:
+            queryList = self.MS.data['activeUsers']
+        else:
+            queryList = self.DS.select(User)
+
         # Check reachablity via location filter
         for user in self.MS.data['activeUsers']:
             # Users at this server should marked 'reachable'
@@ -138,11 +143,12 @@ class UsersController(__Controller):
                 data = response[1].read().splitlines()
                 # Parse api support list
                 apiList = data[:-3]
+                
                 for i, api in enumerate(apiList):
                     try:
-						endpoint = api.split(' ')[0]
-						if not endpoint == 'Available':
-							apiList[i] = endpoint
+                        endpoint = api.split(' ')[0]
+                        if not endpoint == 'Available':
+                            apiList[i] = endpoint
                     except IndexError:
                         continue
                 
@@ -157,34 +163,43 @@ class UsersController(__Controller):
 
                 # Parse standards support list
                 try:
-                    standardsList = data[-3:]
+                    standardsList = data[-2:]
                     
                     standards = {
-                        'encryption': sorted(list(set(standardsList[0]) & set(Globals.standards['encryption']))),
-                        'hashing': sorted(list(set(standardsList[1]) & set(Globals.standards['hashing'])))
+                        'encryption': standardsList[0],
+                        'hashing': standardsList[1]
                     }
+
+                    #standards = {
+                    #    'encryption': sorted(list(set(standardsList[0]) & set(Globals.standards['encryption']))),
+                    #    'hashing': sorted(list(set(standardsList[1]) & set(Globals.standards['hashing'])))
+                    #}
 
                     if '0' not in standards['encryption']:
                         standards['encryption'].insert(0, '0')
 
                     if '0' not in encryptionStandards:
                         encryptionStandards.insert(0, '0')
-                except:
+
+                except (KeyError, IndexError, ValueError):
                     standards = {
                         'encryption': ['0'],
                         'hashing': ['0']
                     }
 
-                # Test encryption standards higher than 2 based on reciever public key entry
+                # Test encryption standards higher than 2 based on reciever
+                # public key entry
                 # Find destination's encryption key and run test
-                if int(standards['encryption'][-1]) > 2:
-                    try:
-                        encryptionKey = potentiallyReachable[i].publicKey
-                        self.SS.encrypt('a', '3', key=encryptionKey)
-                    except:
-                        for i in range(2, -1, -1):
-                            if unicode(i) in standards['encryption']:
-                                standard['encryption'] = unicode(i)
+                #if int(standards['encryption'][-1]) > 2:
+                #    try:
+                #        encryptionKey = potentiallyReachable[i].publicKey
+                #        self.SS.encrypt('a', '3', key=encryptionKey)
+                #    except (KeyError, ValueError, IndexError):
+                #        workingEncryption = []
+                #        for i in range(2, -1, -1):
+                #            if unicode(i) in standards['encryption']:
+                #                workingEncryption.append(unicode(i))
+                #        standards['encryption'] = workingEncryption
 
                 standardsMeta = UserMeta(None, potentiallyReachable[i].id, 'standards', dumps(standards))
                 # Check if entry exists
@@ -197,8 +212,8 @@ class UsersController(__Controller):
                     standardsMeta.id = id
 
                 # Make list of users with these optional APIs
-                if '/handshake' in apiList and not (len(standards['encryption']) == 1 and '0' in standards['encryption']):
-                    handshakeQueryList.append((potentiallyReachable[i], standardsMeta))
+                #if '/handshake' in apiList and not (len(standards['encryption']) == 1 and '0' in standards['encryption']):
+                #    handshakeQueryList.append((potentiallyReachable[i], standardsMeta))
 
                 if '/getStatus' in apiList:
                     statusQueryList.append(potentiallyReachable[i])

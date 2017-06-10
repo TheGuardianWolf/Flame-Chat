@@ -161,7 +161,7 @@ class FilesController(__Controller):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get(self, target, since=None):
+    def get(self, since=None):
         if (cherrypy.request.remote.ip != '127.0.0.1'):
             raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
         if not self.isAuthenticated():
@@ -180,33 +180,41 @@ class FilesController(__Controller):
                 self.relayFiles()
         
         if since is None:
-            conditions = [
-                '(sender=' + self.DS.queryFormat(username),
-                'AND',
-                'destination=' + self.DS.queryFormat(target) + ')',
-                'OR',
-                '(sender=' + self.DS.queryFormat(target),
-                'AND',
-                'destination=' + self.DS.queryFormat(username) + ')'
-            ]
-            q = self.DS.select(File, ' '.join(conditions))
+            #conditions = [
+            #    '(sender=' + self.DS.queryFormat(username),
+            #    'AND',
+            #    'destination=' + self.DS.queryFormat(target) + ')',
+            #    'OR',
+            #    '(sender=' + self.DS.queryFormat(target),
+            #    'AND',
+            #    'destination=' + self.DS.queryFormat(username) + ')'
+            #]
+            #q = self.DS.select(File, ' '.join(conditions))
+            q = self.DS.select(File, 'destination=' + self.DS.queryFormat(username))
         else:
             try:
-                timeString = datetime.strptime(since.split('.')[0], "%Y-%m-%dT%H:%M:%SZ" )
-            except (ValueError, IndexError) as e:
+                timeSince = timegm(gmtime(float(since)))
+            except ValueError:
                 raise cherrypy.HTTPError(400, 'Malformed time.')
+            #conditions = [
+            #    '(sender=' + self.DS.queryFormat(username),
+            #    'AND',
+            #    'destination=' + self.DS.queryFormat(target) + ')',
+            #    'OR',
+            #    '(sender=' + self.DS.queryFormat(target),
+            #    'AND',
+            #    'destination=' + self.DS.queryFormat(username) + ')',
+            #    'AND',
+            #    'id',
+            #    'IN',
+            #    '(SELECT fileId FROM ' + FileMeta.tableName + ' WHERE key=\'recievedTime\' AND value > \'' + timeString + '\')'
+            #]
             conditions = [
-                '(sender=' + self.DS.queryFormat(username),
-                'AND',
-                'destination=' + self.DS.queryFormat(target) + ')',
-                'OR',
-                '(sender=' + self.DS.queryFormat(target),
-                'AND',
-                'destination=' + self.DS.queryFormat(username) + ')',
+                'destination=' + self.DS.queryFormat(username),
                 'AND',
                 'id',
                 'IN',
-                '(SELECT fileId FROM ' + FileMeta.tableName + ' WHERE key=\'recievedTime\' AND value > \'' + timeString + '\')'
+                '(SELECT fileId FROM ' + FileMeta.tableName + ' WHERE key=\'recievedTime\' AND CAST(value as REAL) > ' + '{0:.3f}'.format(timeSince) + ')'
             ]
             q = self.DS.select(File, ' '.join(conditions))
 
@@ -275,8 +283,7 @@ class FilesController(__Controller):
         cherrypy.session.release_lock()
 
         currentTime = getTime()
-        recievedTime = strftime('%Y-%m-%dT%H:%M:%S', gmtime(currentTime))
-        stamp = "{0:.3f}".format(currentTime)
+        stamp = '{0:.3f}'.format(currentTime)
 
         # Check destination standards support list
         conditions = [
@@ -336,7 +343,7 @@ class FilesController(__Controller):
         fileId = self.DS.insert(file)
 
         # Generate file metadata for relay
-        fileMetaTime = FileMeta(None, fileId, 'recievedTime', recievedTime)
+        fileMetaTime = FileMeta(None, fileId, 'recievedTime', stamp)
         fileMetaStatus = FileMeta(None, fileId, 'relayAction', 'broadcast')
         self.DS.insertMany(fileMetaTime + fileMetaStatus)              
 
