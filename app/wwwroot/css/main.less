@@ -206,12 +206,16 @@ body {
             }
         }
     }
+    .list-bar {
+        display: flex;
+        flex-direction: column;
+    }
     .list-pane {
         width: 350px;
         max-width: 100%;
         height: 100%;
         overflow-y: auto;
-        flex-shrink: 0;
+        flex-grow: 1;
         .list-wrapper {
             .list-group-toggle {
                 font-weight: 600;

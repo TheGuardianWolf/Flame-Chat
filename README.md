@@ -41,6 +41,17 @@ python2 ./packages/pytest/pytest.py test
 If you're on Windows, run the .bat file with ```---run-tests```.
 
 
+## Blacklisting ##
+
+Blacklist is located in ```app/Config/blacklist.json```, update according to the following model:
+
+```json
+```
+
+## Rate Limiting ##
+
+Public apis are IP restricted to 10 requests per 5 seconds.
+
 ## Contacts ##
 
 Jerry Fan - jfan082@aucklanduni.ac.nz

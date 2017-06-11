@@ -10,7 +10,7 @@ webRoot = os.path.join(appRoot, 'wwwroot')
 loginRoot = r'http://cs302.pythonanywhere.com'
 
 # Values for public server
-publicPort = 10101
+publicPort = 10001
 
 # Values for ip location
 universityDesktop = '10.103.0.0'

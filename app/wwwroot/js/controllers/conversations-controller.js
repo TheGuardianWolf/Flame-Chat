@@ -11,7 +11,7 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
             var content = $scope.data.messages
             .filter(convoFilter)
             .map(function(message) {
-                message.ngId = 'm' + String(message.id);
+                message.ngId = 'm' + String(message.id) + String(message.stamp);
                 message.type = 'message';
                 return message;
             })
@@ -19,7 +19,7 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
                 $scope.data.files
                 .filter(convoFilter)
                 .map(function(file) {
-                    file.ngId = 'f' + String(file.id);
+                    file.ngId = 'f' + String(file.id) + String(file.stamp);
                     file.type = 'file';
                     file.href = 'data:' + file.content_type +  ';base64,' + file.file;
                     return file;

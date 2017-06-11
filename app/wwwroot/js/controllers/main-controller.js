@@ -122,24 +122,24 @@ flame.controller('mainController', [
 
             var m = fetchMessages();
             m.promise.then(null, null, function(response) {
-                if (lastFetch.messages !== null) {
-                    $scope.data.messages.push.apply($scope.data.messages, response.data);
-                }
-                else {
+                // if (lastFetch.messages !== null) {
+                //     $scope.data.messages.push.apply($scope.data.messages, response.data);
+                // }
+                // else {
                     $scope.data.messages = response.data;
-                }
-                lastFetch.messages = String(Date.now() / 1000);
+                // }
+                // lastFetch.messages = String(Date.now() / 1000);
             });
 
             var f = fetchFiles();
             f.promise.then(null, null, function(response) {
-                if (lastFetch.files !== null) {
-                    $scope.data.files.push.apply($scope.data.files, response.data);
-                }
-                else {
+                // if (lastFetch.files !== null) {
+                //     $scope.data.files.push.apply($scope.data.files, response.data);
+                // }
+                // else {
                     $scope.data.files = response.data;
-                }
-                lastFetch.files = String(Date.now() / 1000);
+                // }
+                // lastFetch.files = String(Date.now() / 1000);
             });
 
             return [m, f];

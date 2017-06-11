@@ -51,7 +51,7 @@ class PublicController(__Controller):
 
         if self.checkTiming(cherrypy.session, 'lastRateLimitStart', 5):
             cherrypy.session['lastRateLimitStart'] = datetime.utcnow()
-            cherrypy.session['timesAccessed'] = 10
+            cherrypy.session['timesAccessed'] = 20
         else:
             try:
                 if cherrypy.session['timesAccessed'] > 5:
