@@ -17,7 +17,7 @@ from app.Models.FileMetaModel import FileMeta
 
 class PublicController(__Controller):
     _cp_config = {
-        'tools.sessions.on': False
+        'tools.sessions.on': True
     }
 
     def __init__(self, services):
@@ -32,6 +32,34 @@ class PublicController(__Controller):
         f.close()
 
     def __userFilter(self, ip):
+        try:
+            for item in self.blacklist:
+                (entry, type) = item.values()
+                if type == 'username':
+                    try:
+                        q = self.DS.select(User, 'username=' + self.DS.queryFormat(entry))[0]
+                    except IndexError:
+                        pass
+                    if entry == ip:
+                        return False
+
+                elif type == 'ip':
+                    if entry == ip:
+                        return False
+        except (ValueError, TypeError):
+            cherrypy.log.error('Malformed blacklist')
+
+        if self.checkTiming(cherrypy.session, 'lastRateLimitStart', 5):
+            cherrypy.session['lastRateLimitStart'] = datetime.utcnow()
+            cherrypy.session['timesAccessed'] = 10
+        else:
+            try:
+                if cherrypy.session['timesAccessed'] > 5:
+                    return False
+                else:
+                    cherrypy.session['timesAccessed'] += 1
+            except:
+                cherrypy.session['timesAccessed'] = 1
         return True
 
     @cherrypy.expose
@@ -41,7 +69,7 @@ class PublicController(__Controller):
     @cherrypy.expose
     def listAPI(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
-            return '6'
+            return '11'
 
         output = [
             '\n'.join(self.apiList),
@@ -54,14 +82,14 @@ class PublicController(__Controller):
     @cherrypy.expose
     def ping(self, sender):
         if not self.__userFilter(cherrypy.request.remote.ip):
-            return '6'
+            return '11'
         return '0'
 
     @cherrypy.tools.json_in()
     @cherrypy.expose
     def receiveMessage(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
-            return '6'
+            return '11'
 
         request = cherrypy.request.json
 
@@ -85,7 +113,7 @@ class PublicController(__Controller):
     @cherrypy.expose
     def getPublicKey(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
-            return '6'
+            return '11'
 
         request = cherrypy.request.json
 
@@ -109,7 +137,7 @@ class PublicController(__Controller):
     @cherrypy.expose
     def handshake(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
-            return '6'
+            return '11'
 
         request = cherrypy.request.json
 
@@ -135,7 +163,7 @@ class PublicController(__Controller):
     @cherrypy.expose
     def getProfile(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
-            return '6'
+            return '11'
 
         request = cherrypy.request.json
         try:
@@ -197,7 +225,7 @@ class PublicController(__Controller):
     @cherrypy.expose
     def receiveFile(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
-            return '6'
+            return '11'
 
         request = cherrypy.request.json
 
@@ -223,7 +251,7 @@ class PublicController(__Controller):
         raise cherrypy.HTTPError(404, 'Not implemented.')
 
         if not self.__userFilter(cherrypy.request.remote.ip):
-            return '6'
+            return '11'
 
         request = cherrypy.request.json
 
@@ -241,7 +269,7 @@ class PublicController(__Controller):
     @cherrypy.expose
     def getStatus(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
-            return '6'
+            return '11'
 
         request = cherrypy.request.json
 
