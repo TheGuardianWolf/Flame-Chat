@@ -21,7 +21,7 @@ python2 ./app/Server.py
 
 If you're on Windows, just run the .bat file. (Sorry, I can't write Bash).
 
-Visit ```localhost:10101``` afterwards and the web page should be up. This may take a while to load depending on your connection to CDNJS.
+Visit ```localhost:10001``` afterwards and the web page should be up. This may take a while to load depending on your connection to CDNJS.
 
 ### Test ###
 
