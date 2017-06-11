@@ -1,34 +1,82 @@
-flame.controller('profileController', ['$scope', function($scope) {
+flame.controller('profileController', ['$scope', '$http', function($scope, $http) {
     // Create view models for templating
-    $scope.showContent = function() {
-        return $scope.selectedModel !== null;
-    }
-    $scope.selectedModel = null;
-    $scope.selectModel = function(model) {
-        var filter = function(obj) {
-            return obj.sender == model.username || obj.destination == model.username;
-        };
+    $scope.profile = {
+        fullname: '',
+        position: '',
+        description: '',
+        location: '',
+        picture: ''
+    };
 
-        var content = $scope.data.messages
-        .filter(relatedFilter)
-        .forEach(function(message) {
-            message.ngId = 'm' + String(message.id);
-        })
-        .concat(
-            $scope.data.files
-            .filter(relatedFilter)
-            .forEach(function(file) {
-                file.ngId = 'f' + String(file.id);
-                file.href = 'data:' + file.content_type +  ';base64,' + file.file;
+    var userId = null;
+    var formRetrieved = false;
+
+    $scope.$watch('data.users', function() {
+        if ($scope.data.users) {
+            if (!userId) {
+                currentUser = $scope.data.users.reachable.filter(function(user) {
+                    return user.username === $scope.data.currentUser.username;
+                });
+
+                if (currentUser.length > 0) {
+                    userId = currentUser[0].id;
+                }
+            }
+        }
+    });
+
+    var updateProfile = function(newValue, oldValue) {
+        if (!formRetrieved) {
+            var profile = $scope.data.profiles.filter(function(profile) {
+                return profile.userId === userId;
+            });
+
+            if (profile.length > 0) {
+                profile = profile[0];
+
+                $scope.profile.fullname = profile.fullname;
+                $scope.profile.position = profile.position;
+                $scope.profile.description = profile.description;
+                $scope.profile.location = profile.location;
+                $scope.profile.picture = profile.picture;
+            } 
+            formRetrieved = true;
+        }
+    };
+
+    $scope.$watchCollection('data.profiles', updateProfile);
+
+    var sendProfile = function() {
+        var request = $http({
+            method: 'POST',
+            url: apiRoute(['profiles', 'post']),
+            data: JSON.stringify({
+                fullname: $scope.profile.fullname,
+                position: $scope.profile.position,
+                description: $scope.profile.description,
+                location: $scope.profile.location,
+                picture: $scope.profile.picture
             })
-        )
-        .sort(function(a, b) {
-            return a.stamp - b.stamp;
         });
 
-        $scope = selectedModel = {
-            model: model,
-            content: content
-        };
+        request.then(
+            function success(response) {
+                $.Notify({
+                    caption: 'Success',
+                    content: 'Profile updated on local server.',
+                    type: 'success'
+                });
+            },
+            function fail(response) {
+                $.Notify({
+                    caption: 'Error',
+                    content: 'Unable to update profile, local server reports an error.',
+                    type: 'alert'
+                });
+            }
+        );
+
+        return request;
     };
+    $scope.sendProfile = sendProfile;
 }]);

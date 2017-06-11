@@ -92,15 +92,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="app\wwwroot\index.html" />
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="app" />
     <Folder Include="app\Controllers\" />
     <Folder Include="app\Models\" />
     <Folder Include="app\Routers\" />
     <Folder Include="app\Services\" />
-    <Folder Include="app\wwwroot" />
     <Folder Include="tests\" />
     <Folder Include="tests\Controllers\" />
     <Folder Include="tests\Services\" />

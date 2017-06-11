@@ -10,7 +10,9 @@ var flame = angular.module('flame', [
   'ngTouch',
   'angular-loading-bar',
   'emguo.poller',
-  'ngFileUpload'
+  'ngFileUpload',
+  'presence',
+  'luegg.directives'
 ])
 .config( [
     '$compileProvider', '$routeProvider', '$locationProvider', 'pollerConfig',
@@ -43,3 +45,15 @@ var flame = angular.module('flame', [
         });
     }
 ]);
+
+flame.factory('states', function($presence) {
+    var states = {
+        ACTIVE : 0, // enter this state immediately after user-action
+        IDLE : { // initially, two seconds after the last keypress and when mouse- or touchevents occur this state will be active
+            enter: 5000,
+            initial: true
+        },
+        AWAY : 60000 
+    };
+    return $presence.init(states);
+});

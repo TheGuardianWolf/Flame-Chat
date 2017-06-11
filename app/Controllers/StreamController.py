@@ -1,5 +1,6 @@
 import cherrypy
 from datetime import datetime
+from multiprocessing.pool import ThreadPool
 from time import sleep
 from app import Globals
 from app.Controllers.__Controller import __Controller
@@ -25,37 +26,77 @@ class StreamController(__Controller):
     def upkeep(self, sessionData):
         memoryData = self.MS.data
 
-        try:
-            if len(memoryData['pushRequests']) > 0:
-                self.contentPush()
-        except KeyError:
-            memoryData['pushRequests'] = []
+        def pushWorker():
+            try:
+                if len(memoryData['pushRequests']) > 0:
+                    self.contentPush()
+            except KeyError:
+                memoryData['pushRequests'] = []
 
-        if self.checkTiming(sessionData, 'lastLoginReportTime', 40):
-            self.__auth.dynamicAuth(sessionData['username'], sessionData['passhash'], sessionData=sessionData)
-        
-        if self.checkTiming(memoryData, 'lastUserListRefresh', 10):
-            self.__users.dynamicRefreshActiveUsers(sessionData['username'], sessionData['passhash'])
-        
-        if self.checkTiming(memoryData, 'lastUserInfoQuery', 10):
-            self.__users.userInfoQuery(sessionData['username'])
+        def reportWorker():
+            if self.checkTiming(sessionData, 'lastLoginReportTime', 40):
+                cherrypy.log.error('Reporting in!')
+                self.__auth.dynamicAuth(sessionData['username'], sessionData['passhash'], sessionData=sessionData)
+      
+        def userListWorker():
+            if self.checkTiming(memoryData, 'lastUserListRefresh', 10):
+                cherrypy.log.error('Getting user list...')
+                self.__users.dynamicRefreshActiveUsers(sessionData['username'], sessionData['passhash'])
 
-        if 'pulled' not in sessionData:
-            self.__users.requestRetrieval(sessionData['username'])
-            sessionData['pulled'] = True
+        def userInfoWorker():
+            if self.checkTiming(memoryData, 'lastUserInfoQuery', 10):
+                cherrypy.log.error('Getting user info...')
+                self.__users.userInfoQuery(sessionData['username'])
 
-        if self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
-            self.__status.userStatusQuery()
+        def pullWorker():
+            if self.checkTiming(sessionData, 'lastPulled', 300):
+                cherrypy.log.error('Pulling...')
+                self.__users.requestRetrieval(sessionData['username'], sessionData=sessionData)
 
-        if self.checkTiming(memoryData, 'lastUserProfileQuery', 60):
-            self.__profiles.userProfileQuery(sessionData['username'])
+        def userStatusWorker():
+            if self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
+                cherrypy.log.error('Getting statuses...')
+                self.__status.userStatusQuery()
+        def userProfileWorker():
+            if self.checkTiming(memoryData, 'lastUserProfileQuery', 10):
+                cherrypy.log.error('Getting profiles...')
+                self.__profiles.userProfileQuery(sessionData['username'])
 
-        if self.checkTiming(memoryData, 'lastRelayMessageSend', 300):
-            self.__messages.relayMessages()
+        def relayMessageWorker():
+            if self.checkTiming(memoryData, 'lastRelayMessageSend', 300):
+                cherrypy.log.error('Broadcasting messages...')
+                self.__messages.relayMessages()
 
-        if self.checkTiming(memoryData, 'lastRelayFileSend', 300):
-            self.__files.relayFiles()
+        def relayFileWorker():
+            if self.checkTiming(memoryData, 'lastRelayFileSend', 300):
+                cherrypy.log.error('Broadcasting files...')
+                self.__files.relayFiles()
 
+        def runWorker(worker):
+            worker()
+
+        pool = ThreadPool(processes=25)
+
+        asyncWorkers = [
+            pullWorker,
+            pushWorker,  
+            reportWorker,
+            userListWorker, 
+            userInfoWorker,
+            userStatusWorker, 
+            userProfileWorker, 
+            relayMessageWorker, 
+            relayFileWorker
+        ]
+
+        workers = [
+            
+        ]
+
+        for worker in asyncWorkers:
+            runWorker(worker)
+
+        #pool.map(runWorker, asyncWorkers)
 
     @cherrypy.expose
     def index(self):
@@ -88,7 +129,12 @@ class StreamController(__Controller):
                     pass
 
                 try:
-                    sessionData['pulled'] = cherrypy.session['pulled']
+                    sessionData['authenticated'] = cherrypy.session['authenticated']
+                except KeyError:
+                    pass
+
+                try:
+                    sessionData['lastPulled'] = cherrypy.session['lastPulled']
                 except KeyError:
                     pass
 
@@ -96,40 +142,33 @@ class StreamController(__Controller):
                 cherrypy.session.release_lock()
                 self.upkeep(sessionData)
 
-                cherrypy.session.acquire_lock()
-                try:
-                    del cherrypy.session['lastLoginReportTime']
-                except KeyError:
-                    pass
-
-                try:
-                    del cherrypy.session['pulled']
-                except KeyError:
-                    pass
-
-                try:
-                    del cherrypy.session['streamEnabled']
-                except KeyError:
-                    pass
-
                 try:   
-                    cherrypy.session['streamEnabled'] = True
-                    try:
-                        cherrypy.session['pulled'] = sessionData['pulled']
-                    except KeyError:
-                        pass
-                
-                    try:
-                        cherrypy.session['lastLoginReportTime'] = sessionData['lastLoginReportTime']
-                    except KeyError:
-                        pass
                     yield 'ping\n\n'
                 except GeneratorExit:
-                    self.__auth.dynamicLogoff(sessionData['username'], sessionData['passhash'])     
-
-                cherrypy.session.release_lock()
-                sleep(1)
+                    self.__auth.dynamicLogoff(sessionData['username'], sessionData['passhash'])
+                    try:
+                        self.MS.data['userStatus'][sessionData['username']] = 'Offline'
+                    except KeyError:
+                        pass
+                    return                    
+                
+                sleep(5)
                 cherrypy.session.acquire_lock()
+
+                try:
+                    cherrypy.session['lastPulled'] = sessionData['lastPulled']
+                except KeyError:
+                    pass
+
+                try:
+                    cherrypy.session['authenticated'] = sessionData['authenticated']
+                except KeyError:
+                    pass
+                
+                try:
+                    cherrypy.session['lastLoginReportTime'] = sessionData['lastLoginReportTime']
+                except KeyError:
+                    pass
   
         return content()
 

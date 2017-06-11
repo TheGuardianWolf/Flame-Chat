@@ -25,13 +25,13 @@
     <link rel="stylesheet" href="css/main.css">
 </head>
 
-<body ng-app="flame" ng-controller="mainController" ng-cloak>
+<body ng-app="flame" ng-controller="mainController" presence>
     <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
     <div class="splash bg-darker" ng-show="state.loading">
         <h1 class="fg-white">Loading...</h1>
-        <div data-role="preloader" data-type="cucle"></div>
+        <div data-role="preloader" data-type="cycle"></div>
     </div>
 
     <!-- Begin top bar -->
@@ -78,7 +78,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.4/angular-touch.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.9.0/loading-bar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-poller/0.4.5/angular-poller.js"></script>
-    <script src="https://raw.githubusercontent.com/katebe/angular-presence/0.2.3/angular-presence.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angularjs-scroll-glue/2.2.0/scrollglue.min.js"></script>
+    <script src="js/angular-presence.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/danialfarid-angular-file-upload/12.2.13/ng-file-upload.min.js"></script>
 
     <script src="js/functions.js"></script>

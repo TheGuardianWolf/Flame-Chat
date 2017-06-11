@@ -1,10 +1,11 @@
 flame.controller('conversationsController', ['$scope', '$http', function($scope, $http) {
     // Create view models for templating
-    var updateContentModel = function() {
+    var updateContentModel = function(newValue, oldValue) {
         model = $scope.selectedModel;
         if (model !== null) {
             var convoFilter = function(obj) {
-                return obj.sender == model.username || obj.destination == model.username;
+                return obj.sender == model.username || 
+                obj.destination == model.username;
             };
 
             var content = $scope.data.messages
@@ -25,11 +26,19 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
                 })
             )
             .sort(function(a, b) {
-                return a.stamp - b.stamp;
+                if (a.stamp && b.stamp) {
+                    return parseFloat(a.stamp) - parseFloat(b.stamp);
+                }
+            })
+            .map(function(item) {
+                if (!item.timestamp) {
+                    time = new Date(parseFloat(item.stamp) * 1000);
+                    item.timestamp = time.toLocaleTimeString() + ' ' + time.toLocaleDateString();
+                }
+                return item;
             });
 
             $scope.contentModel = content;
-            console.log(content);
         }
     };
     $scope.showContent = function() {
@@ -64,30 +73,31 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
             if (branch === 'unknown') {
                 userEntry.status = 'Offline';
             }
-
-            if (typeof $scope.data.status[user.username] !== 'undefined') {
+            else if (branch === 'unreachable') {
+                userEntry.status = 'Unknown';
+            }
+            else if (typeof $scope.data.status[user.username] === 'string') {
                 userEntry.status = capitalize($scope.data.status[user.username]);
             }
 
-            
             var profile = $scope.data.profiles.filter(function(profile) {
                 return profile.userId === user.id;
             });
 
             if (profile.length > 0) {
-                if (typeof profile[0].fullname !== 'undefined') {
+                if (profile[0].fullname) {
                     userEntry.displayName = profile[0].fullname;
                 }
-                if (typeof profile[0].picture !== 'undefined') {
+                if (profile[0].picture) {
                     userEntry.picture = profile[0].picture;
                 }
-                if (typeof profile[0].description !== 'undefined') {
+                if (profile[0].description) {
                     userEntry.description = profile[0].description;
                 }
-                if (typeof profile[0].location !== 'undefined') {
+                if (profile[0].location) {
                     userEntry.location = profile[0].location;
                 }
-                if (typeof profile[0].position !== 'undefined') {
+                if (profile[0].position) {
                     userEntry.position = profile[0].position;
                 }
             }
@@ -95,6 +105,13 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
             return userEntry;
         })
         .filter(function(user) {
+            if ($scope.search) {
+                searchTerm = $scope.search.toLowerCase();
+                if (user.username.toLowerCase().indexOf(searchTerm) === -1 && 
+                user.displayName.toLowerCase().indexOf(searchTerm) === -1) {
+                    return false;
+                }
+            }
             return user.username !== $scope.data.currentUser.username;
         })
         .sort(function(a, b) {
@@ -136,8 +153,9 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
     $scope.$watch('data.users', updateListView);
     $scope.$watch('data.profiles', updateListView);
     $scope.$watch('data.status', updateListView);
-    $scope.$watch('data.messages', updateContentModel);
-    $scope.$watch('data.files', updateContentModel);
+    $scope.$watch('search', updateListView);
+    $scope.$watchCollection('data.messages', updateContentModel);
+    $scope.$watchCollection('data.files', updateContentModel);
 
     $scope.entry = {
         message: '',
@@ -166,7 +184,7 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
 
     var sendFile = function() {
         var file = $scope.entry.file;
-        var destination = $scope.selectedModel.model.username;
+        var destination = $scope.selectedModel.username;
         var reader = new FileReader();
         
         reader.readAsDataURL(file);
@@ -185,11 +203,40 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
                 })
             });
             $scope.entry.message = '';
+
+            request.then(
+                function success(response) {
+                    $.Notify({
+                        caption: 'Success',
+                        content: 'File uploaded to local server.',
+                        type: 'success'
+                    });
+                },
+                function fail(response) {
+                    $.Notify({
+                        caption: 'Error',
+                        content: 'Unable to send, local server reports an error.',
+                        type: 'alert'
+                    });
+                }
+            );
+
             return request;
         }, false);
+    };
+
+    $scope.bubbleClass = function(model) {
+        if (model.sender === $scope.data.currentUser.username) {
+            return 'right';
+        }
+        else {
+            return 'left';
+        }
     };
 
     $scope.insertEmote = function(event) {
         $scope.entry.message += event.target.innerText;
     };
+
+    $scope.search = '';
 }]);

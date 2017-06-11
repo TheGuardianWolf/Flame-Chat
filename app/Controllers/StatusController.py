@@ -11,10 +11,15 @@ class StatusController(__Controller):
 
     # Call remote peer getStatus
     def userStatusQuery(self):
+        self.MS.data['lastUserStatusQuery'] = datetime.utcnow()
+
         try:
             statusQueryList = self.MS.data['statusQueryList']
         except KeyError:
-            statusQueryList = []
+            try:
+                statusQueryList = self.MS.data['reachableUsers']
+            except KeyError:
+                statusQueryList = []
 
         pool = ThreadPool(processes=50)
         def checkStatus(user):
@@ -25,18 +30,22 @@ class StatusController(__Controller):
             if status == 200:
                 try:
                     return (user, loads(response.read())['status'])
-                except (KeyError, TypeError):
+                except (KeyError, TypeError, ValueError):
                     return (user, None)
+            else:
+                return (user, None)
 
         responses = pool.map(checkStatus, statusQueryList)
 
-        for user, status in responses:
-            try:
-                if status is not None:
+        for response in responses:
+            if response is not None:
+                (user, status) = response
+                try:
+                    if status is not None:
+                        self.MS.data['userStatus'][user.username] = status
+                except KeyError:
+                    self.MS.data['userStatus'] = {}
                     self.MS.data['userStatus'][user.username] = status
-            except KeyError:
-                self.MS.data['userStatus'] = {}
-                self.MS.data['userStatus'][user.username] = status
 
 
     @cherrypy.expose

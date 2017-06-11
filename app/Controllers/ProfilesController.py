@@ -4,6 +4,7 @@ from multiprocessing.pool import ThreadPool
 from app import Globals
 from app.Controllers.__Controller import __Controller
 from app.Models.ProfileModel import Profile
+from app.Models.UserModel import User
 from json import loads, dumps
 
 class ProfilesController(__Controller):
@@ -23,6 +24,7 @@ class ProfilesController(__Controller):
 
         for i, results in enumerate(q):
             if len(results) == 0:
+                profileList[i].id = None;
                 insertions.append(profileList[i])
             else:
                 for dbEntry in results:
@@ -53,19 +55,32 @@ class ProfilesController(__Controller):
 
                 (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/getProfile', payload, timeout=5)
 
+                if user.username == 'efon102':
+                    cherrypy.log.error(unicode(response))
+
                 if status == 200:
-                    return (user, loads(response.read()))
+                    try:
+                        return (user, loads(response.read()))
+                    except (KeyError, TypeError, ValueError):
+                        return (user, None)
                 else:
                     return (user, None)
 
         responses = pool.map(getProfile, profileQueryList)
 
         profileList = []
-        for user, profile in responses:
-            if profile is not None:
-                model = Profile.deserialize(profile)
-                model.userId = user.id
-                profileList.append(model)
+
+        
+        for response in responses:
+            if response is not None:
+                (user, profile) = response
+                if profile is not None:
+                    try:
+                        model = Profile.deserialize(profile)
+                        model.userId = user.id
+                        profileList.append(model)
+                    except TypeError:
+                        pass
 
         self.updateTable(profileList)
 

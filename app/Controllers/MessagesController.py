@@ -119,7 +119,10 @@ class MessagesController(__Controller):
 
     def sendMessage(self, message, relayTo=None):
         destination = relayTo
-        reachableUsers = self.MS.data['reachableUsers']
+        try:
+            reachableUsers = self.MS.data['reachableUsers']
+        except KeyError:
+            reachableUsers = []
 
         if relayTo is None:
             # Find user entry

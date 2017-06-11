@@ -104,7 +104,10 @@ class FilesController(__Controller):
 
     def sendFile(self, file, relayTo=None):
         destination = relayTo
-        reachableUsers = self.MS.data['reachableUsers']
+        try:
+            reachableUsers = self.MS.data['reachableUsers']
+        except KeyError:
+            reachableUsers = []
 
         if relayTo is None:
             # Find user entry
@@ -151,7 +154,7 @@ class FilesController(__Controller):
                 }
 
                 # Hash file
-                hash = self.SS.hash(file.message, standard['hashing'])
+                hash = self.SS.hash(file.file, standard['hashing'])
 
                 # Update file
                 file.hashing = standard['hashing']
@@ -276,7 +279,7 @@ class FilesController(__Controller):
                                     cherrypy.log.error('Cannot decrypt file from ' + unicode(q[i].sender))
                                     raise ValueError('Cannot decrypt')
 
-                    # Check if message is recent
+                    # Check if file is recent
                     if since is not None:
                         if float(q[i].stamp) <= float(since):
                             continue

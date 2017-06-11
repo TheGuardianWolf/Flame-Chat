@@ -12,7 +12,10 @@ class LoginService(object):
         self.location = None
 
     def __getExternalIP(self):
-        return urlopen('http://ip.42.pl/raw').read()
+        try:
+            return urlopen('https://api.ipify.org/').read()
+        except URLError:
+            return urlopen('http://ip.42.pl/raw').read()
 
     def __getInternalIP(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -41,23 +44,21 @@ class LoginService(object):
     def getLocation(self):
         extIP = self.__getExternalIP()
         extIPArr = extIP.split('.')
-        uniIPArr = Globals.universityExternalIP.split('.')
 
-        if (extIPArr[0], extIPArr[1], extIPArr[2]) == (uniIPArr[0], uniIPArr[1], uniIPArr[2]):
-            currIntIP = self.__getInternalIP()
-            currIntIPArr = currIntIP.split('.')
+        currIntIP = self.__getInternalIP()
+        currIntIPArr = currIntIP.split('.')
 
-            desktopIntIPArr = Globals.universityDesktop.split('.')
-            wifiIntIPArr = Globals.universityWifi.split('.')
+        desktopIntIPArr = Globals.universityDesktop.split('.')
+        wifiIntIPArr = Globals.universityWifi.split('.')
             
-            if (currIntIPArr[0], currIntIPArr[1]) == (desktopIntIPArr[0], desktopIntIPArr[1]):
-                self.ip = currIntIP
-                self.location = 0
-                return (0, currIntIP)
-            elif (currIntIPArr[0], currIntIPArr[1]) == (wifiIntIPArr[0], wifiIntIPArr[1]):
-                self.ip = currIntIP
-                self.location = 1
-                return (1, currIntIP)
+        if (currIntIPArr[0], currIntIPArr[1]) == (desktopIntIPArr[0], desktopIntIPArr[1]):
+            self.ip = currIntIP
+            self.location = 0
+            return (0, currIntIP)
+        elif (currIntIPArr[0], currIntIPArr[1]) == (wifiIntIPArr[0], wifiIntIPArr[1]):
+            self.ip = currIntIP
+            self.location = 1
+            return (1, currIntIP)
 
         self.ip = extIP
         self.location = 2

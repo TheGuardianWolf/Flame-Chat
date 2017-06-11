@@ -1,29 +1,53 @@
 <div class="profile wrapper">
-    <div class="icon">
-        <img src=""/>
-    </div>
-    <div class="name">
-        <label for="fullname">Full Name</label>
-        <input type="text" name="fullname"></input>
-    </div>
-    <div class="username">
-        <label for="username">Username</label>
-        <input type="text" name="username"></input>
-    </div>
-    <div class="position">
-        <label for="position">Position</label>
-        <input type="text" name="position"></input>
-    </div>
-    <div class="description">
-        <label for="description">Description</label>
-        <input type="text" name="description"></input>
-    </div>
-    <div class="location">
-        <label for="location">Location</label>
-        <input type="text" name="location"></input>
-    </div>
-    <div class="icon-url">
-        <label for="iconUrl">Icon URL</label>
-        <input type="text" name="iconUrl"></input>
+    <div class="content dark-inputs">
+        <div class="left">
+            <div class="icon-wrapper">
+                <div class="icon" ng-if="profile.picture ? true : false" style="background-image:url('{{profile.picture}}')">
+                </div>
+            </div>
+        </div>
+        <div class="right">
+            <div class="name">
+                <label for="fullname">Full Name</label>
+                <div class="input-control text full-size">
+                    <input type="text" name="fullname" ng-model="profile.fullname"></input>
+                </div>
+            </div>
+            <div class="username">
+                <label for="username">Username</label>
+                <div class="input-control text full-size">
+                    <input type="text" name="username" readonly ng-model="data.currentUser.username"></input>
+                </div>
+            </div>
+            <div class="position">
+                <label for="position">Position</label>
+                <div class="input-control text full-size">
+                    <input type="text" name="position" ng-model="profile.position"></input>
+                </div>
+            </div>
+            <div class="description">
+                <label for="description">Description</label>
+                <div class="input-control text full-size">
+                    <input type="text" name="description" ng-model="profile.description"></input>
+                </div>
+            </div>
+            <div class="location">
+                <label for="location">Location</label>
+                <div class="input-control text full-size">
+                    <input type="text" name="location" ng-model="profile.location"></input>
+                </div>
+            </div>
+            <div class="icon-url">
+                <label for="iconUrl">Icon URL</label>
+                <div class="input-control text full-size">
+                    <input type="text" name="iconUrl" ng-model="profile.picture"></input>
+                </div>
+            </div>
+
+            <button class="image-button primary" ng-click="sendProfile()">
+                Share this
+                <span class="icon mif-share bg-darkCobalt"></span>
+            </button>
+        </div>
     </div>
 </div>

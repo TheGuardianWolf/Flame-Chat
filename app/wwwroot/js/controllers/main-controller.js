@@ -3,7 +3,8 @@ flame.controller('mainController', [
     '$http', 
     '$location',
     'poller', 
-    function ($scope, $http, $location, poller) {
+    'states',
+    function ($scope, $http, $location, poller, states) {
         $scope.state = {
             loading: false,
             authenticated: false,
@@ -146,12 +147,53 @@ flame.controller('mainController', [
 
         var startCycles = function() {
             $scope.streamConnect();
-            var userCycle = fetch('users', 'get', 5000, []);
+            var userCycle = fetch('users', 'get', 10000, []);
             var profileCycle = fetch('profiles', 'get', 30000, []);
-            var statusCycle = fetch('status', 'get', 5000, []);
-            var conversationCycle = fetchConversations(5000);
+            var statusCycle = fetch('status', 'get', 10000, []);
+            var conversationCycle = fetchConversations(10000);
         };
 
         $scope.startCycles = startCycles;
+
+        var sendStatus = function(status) {
+            var request = $http({
+                method: 'POST',
+                url: apiRoute(['status', 'post']),
+                data: JSON.stringify({
+                    status: status
+                })
+            });
+
+            request.then(
+                function success(response) {
+                    $.Notify({
+                        caption: 'Success',
+                        content: 'Status updated on local server.',
+                        type: 'success'
+                    });
+                },
+                function fail(response) {
+                    $.Notify({
+                        caption: 'Error',
+                        content: 'Unable to update status, local server reports an error.',
+                        type: 'alert'
+                    });
+                }
+            );
+
+            return request;
+        };
+
+        states.onChange(function(state) {
+            if ($scope.state.authenticated === true) {
+                stateName = capitalize(state.name.toLowerCase());
+                sendStatus(stateName);
+                $.Notify({
+                    caption: 'Status Changed',
+                    content: 'Status changed to \'' + stateName + '\'.',
+                    type: 'info'
+                });
+            }
+        })
     }
 ]);

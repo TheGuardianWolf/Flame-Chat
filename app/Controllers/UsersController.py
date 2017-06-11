@@ -140,99 +140,104 @@ class UsersController(__Controller):
         retrieveMessagesList = []
 
         # Sort responses
-        for i, response in enumerate(responses):
-            responseUser = potentiallyReachable[i]
-            if response[0] == 200:
-                reachableUsers.append(responseUser)
-                data = response[1].read().splitlines()
-                # Parse api support list
-                apiList = data[:-3]
+
+        if responses is not None:
+            for i, response in enumerate(responses):
+                responseUser = potentiallyReachable[i]
+                if response[0] == 200:
+                    reachableUsers.append(responseUser)
+                    data = response[1].read().splitlines()
+                    # Parse api support list
+                    apiList = data[:-3]
                 
-                for i, api in enumerate(apiList):
+                    for i, api in enumerate(apiList):
+                        try:
+                            endpoint = api.split(' ')[0]
+                            # People keep not following the specifications on /listAPI
+                            if not endpoint == 'Available' or not endpoint == 'Available APIs:':
+                                apiList[i] = endpoint
+                        except IndexError:
+                            continue
+                
+                    apiMeta = UserMeta(None, responseUser.id, 'api', dumps(apiList))
+                    # Check if entry exists
+                    q = self.DS.select(UserMeta, 'userId=' + self.DS.queryFormat(responseUser.id) + ' AND key=\'api\'')
+                    if len(q) > 0:
+                        apiMeta.id = q[0].id
+                        self.DS.update(apiMeta)
+                    else:
+                        self.DS.insert(apiMeta)
+
+                    # Parse standards support list
                     try:
-                        endpoint = api.split(' ')[0]
-                        # People keep not following the specifications on /listAPI
-                        if not endpoint == 'Available' or not endpoint == 'Available APIs:':
-                            apiList[i] = endpoint
-                    except IndexError:
-                        continue
-                
-                apiMeta = UserMeta(None, responseUser.id, 'api', dumps(apiList))
-                # Check if entry exists
-                q = self.DS.select(UserMeta, 'userId=' + self.DS.queryFormat(responseUser.id) + ' AND key=\'api\'')
-                if len(q) > 0:
-                    apiMeta.id = q[0].id
-                    self.DS.update(apiMeta)
-                else:
-                    self.DS.insert(apiMeta)
-
-                # Parse standards support list
-                try:
-                    standardsList = data[-2:]
+                        standardsList = data[-2:]
                     
-                    standards = {
-                        'encryption': standardsList[0].split(' '),
-                        'hashing': standardsList[1].split(' ')
-                    }
+                        standards = {
+                            'encryption': standardsList[0].split(' '),
+                            'hashing': standardsList[1].split(' ')
+                        }
 
-                    # Again, people not following specifications and including commas where it says to put space...
-                    for standard in standards.itervalues():
-                        for i in range(0, len(standard)):
-                            standard[i] = standard[i].strip(',')
+                        # Again, people not following specifications and including commas where it says to put space...
+                        for standard in standards.itervalues():
+                            for i in range(0, len(standard)):
+                                standard[i] = standard[i].strip(',')
 
-                    standards['encryption'] = sorted(list(set(standards['encryption']) & set(Globals.standards['encryption'])))
-                    standards['hashing'] = sorted(list(set(standards['hashing']) & set(Globals.standards['hashing'])))
+                        standards['encryption'] = sorted(list(set(standards['encryption']) & set(Globals.standards['encryption'])))
+                        standards['hashing'] = sorted(list(set(standards['hashing']) & set(Globals.standards['hashing'])))
 
-                    if '0' not in standards['encryption']:
-                        standards['encryption'].insert(0, '0')
+                        if '0' not in standards['encryption']:
+                            standards['encryption'].insert(0, '0')
 
-                    if '0' not in standards['hashing']:
-                        standards['hashing'].insert(0, '0')
+                        if '0' not in standards['hashing']:
+                            standards['hashing'].insert(0, '0')
 
-                except (KeyError, IndexError, ValueError):
-                    standards = {
-                        'encryption': ['0'],
-                        'hashing': ['0']
-                    }
+                    except (KeyError, IndexError, ValueError):
+                        standards = {
+                            'encryption': ['0'],
+                            'hashing': ['0']
+                        }
 
-                # Test encryption standards higher than 2 based on reciever
-                # public key entry
-                # Find destination's encryption key and run test
-                #if int(standards['encryption'][-1]) > 2:
-                #    try:
-                #        encryptionKey = responseUser.publicKey
-                #        self.SS.encrypt('a', '3', key=encryptionKey)
-                #    except (KeyError, ValueError, IndexError):
-                #        workingEncryption = []
-                #        for i in range(2, -1, -1):
-                #            if unicode(i) in standards['encryption']:
-                #                workingEncryption.append(unicode(i))
-                #        standards['encryption'] = workingEncryption
+                    # Test encryption standards higher than 2 based on reciever
+                    # public key entry
+                    # Find destination's encryption key and run test
+                    if int(standards['encryption'][-1]) > 2:
+                        try:
+                            encryptionKey = responseUser.publicKey
+                            self.SS.encrypt('a', '3', key=encryptionKey)
+                        except (KeyError, ValueError, IndexError):
+                            workingEncryption = []
+                            for i in range(2, -1, -1):
+                                if unicode(i) in standards['encryption']:
+                                    workingEncryption.append(unicode(i))
+                            standards['encryption'] = workingEncryption
 
-                standardsMeta = UserMeta(None, responseUser.id, 'standards', dumps(standards))
-                # Check if entry exists
-                q = self.DS.select(UserMeta, 'userId=' + self.DS.queryFormat(responseUser.id) + ' AND key=\'standards\'')
-                if len(q) > 0:
-                    standardsMeta.id = q[0].id
-                    self.DS.update(standardsMeta)
+                    standardsMeta = UserMeta(None, responseUser.id, 'standards', dumps(standards))
+                    # Check if entry exists
+                    q = self.DS.select(UserMeta, 'userId=' + self.DS.queryFormat(responseUser.id) + ' AND key=\'standards\'')
+                    if len(q) > 0:
+                        standardsMeta.id = q[0].id
+                        self.DS.update(standardsMeta)
+                    else:
+                        id = self.DS.insert(standardsMeta)
+                        standardsMeta.id = id
+
+                    # Make list of users with these optional APIs
+                    if '/handshake' in apiList and not (len(standards['encryption']) == 1 and '0' in standards['encryption']):
+                        handshakeQueryList.append((responseUser, standardsMeta))
+
+                    if '/getStatus' in apiList:
+                        statusQueryList.append(responseUser)
+
+                    if '/retrieveMessages' in apiList:
+                        retrieveMessagesList.append(responseUser)
                 else:
-                    id = self.DS.insert(standardsMeta)
-                    standardsMeta.id = id
-
-                # Make list of users with these optional APIs
-                #if '/handshake' in apiList and not (len(standards['encryption']) == 1 and '0' in standards['encryption']):
-                #    handshakeQueryList.append((potentiallyReachable[i], standardsMeta))
-
-                if '/getStatus' in apiList:
-                    statusQueryList.append(responseUser)
-
-                if '/retrieveMessages' in apiList:
-                    retrieveMessagesList.append(responseUser)
-            else:
-                unreachableUsers.append(responseUser)
+                    unreachableUsers.append(responseUser)
         
-        self.MS.data['statusQueryList'] = statusQueryList
-        self.MS.data['retrieveMessages'] = retrieveMessagesList
+        # Actually no one is updating their listAPI so I am disabling these :/
+        #self.MS.data['statusQueryList'] = statusQueryList
+        #self.MS.data['retrieveMessages'] = retrieveMessagesList
+
+        # Required for sorting local API user list
         self.MS.data['reachableUsers'] = reachableUsers
         self.MS.data['unreachableUsers'] = unreachableUsers
 
@@ -268,9 +273,11 @@ class UsersController(__Controller):
 
             testResults = pool.map(testEncryption, testStandards)
             workingStandards = []
-            for i, result in enumerate(testResults):
-                if result:
-                    working.append(testStandards[i])
+
+            if testResults is not None:
+                for i, result in enumerate(testResults):
+                    if result:
+                        workingStandards.append(testStandards[i])
 
             standards['encryption'] = workingStandards
             params[1].value = dumps(standards)
@@ -280,14 +287,22 @@ class UsersController(__Controller):
 
         self.DS.updateMany(standardsMetaList)
 
-    def requestRetrieval(self, username):
+    def requestRetrieval(self, username, sessionData=None):
+        if (sessionData is None):
+            cherrypy.session['lastPulled'] = datetime.utcnow();
+        else:
+            sessionData['lastPulled'] = datetime.utcnow();
+
         try:
-            reachableUsers = self.MS.data['reachableUsers']
+            retrieveUsers = self.MS.data['retrieveMessages']
         except KeyError:
-            return
+            try:
+                retrieveUsers = self.MS.data['reachableUsers']
+            except KeyError:
+                retrieveUsers = []
 
         retrieveFrom = []
-        for user in reachableUsers:
+        for user in retrieveUsers:
             if not user.ip == self.LS.ip:
                 retrieveFrom.append(user)
 
@@ -318,17 +333,25 @@ class UsersController(__Controller):
 
 
         if not streamEnabled:
-            pull = False
-            if 'pulled' not in cherrypy.session:
-                cherrypy.session['pulled'] = True
-                pull = True
+            try:
+                sessionData = {
+                    'lastPulled': cherrypy.session['lastPulled']    
+                }
+            except KeyError:
+                sessionData = {}
+
             cherrypy.session.release_lock()
+            if self.checkTiming(sessionData, 'lastPulled', 300):
+                self.requestRetrieval(username, sessionData=sessionData)
             if self.checkTiming(self.MS.data, 'lastUserListRefresh', 10):
                 self.dynamicRefreshActiveUsers(username, passhash)
             if self.checkTiming(self.MS.data, 'lastUserInfoQuery', 10):
                 self.userInfoQuery(username)
-            if pull:
-                self.requestRetrieval(username)
+            cherrypy.session.acquire_lock()
+            try:
+                cherrypy.session['lastPulled'] = sessionData['lastPulled']
+            except KeyError:
+                pass
 
         responseObj = {
             'reachable': [],

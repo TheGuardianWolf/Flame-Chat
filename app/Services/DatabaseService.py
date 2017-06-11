@@ -1,5 +1,6 @@
 import os
 from sqlite3 import IntegrityError, connect, OperationalError
+from time import sleep
 from app import Globals
 from app.Models.AuthModel import Auth
 from app.Models.MessageModel import Message
@@ -14,6 +15,7 @@ class DatabaseService(object):
     def __init__(self, dbPath):
         self.dbPath = dbPath
         self.__checkDB()
+        self.__busy = False
 
     def __checkDB(self):
         if not os.path.isfile(self.dbPath):
@@ -48,17 +50,20 @@ class DatabaseService(object):
         return '(' + joint.join(list) + ')'
 
     def queryMany(self, queries, fetch=False):
+        while (self.__busy):
+            sleep(0.5)
+        self.__busy = True;
         connection = connect(self.dbPath)
         db = connection.cursor()
         returnVals = []
 
         for query in queries:
-            try:
-                db.execute(query)
-            except IntegrityError:
-                raise IntegrityError('datatype mismatch in query: ' + query)
-            except OperationalError:
-                raise OperationalError('Error in: ' + query)
+            #try:
+            db.execute(query)
+            #except IntegrityError:
+            #    raise IntegrityError('datatype mismatch in query: ' + query)
+            #except OperationalError:
+            #    raise OperationalError('Error in: ' + query)
 
             if fetch:
                 returnVals.append(db.fetchall())
@@ -67,6 +72,7 @@ class DatabaseService(object):
 
         connection.commit()
         connection.close()
+        self.__busy = False;
         return returnVals
 
     def query(self, query, fetch=False):

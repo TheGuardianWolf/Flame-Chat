@@ -21,7 +21,8 @@ class Server(object):
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
             'tools.sessions.on': True,
             'tools.encode.encoding': 'utf-8',
-            'tools.encode.on': True
+            'tools.encode.on': True,
+            'response.timeout': 10
         }
 
         self.staticConfig = {

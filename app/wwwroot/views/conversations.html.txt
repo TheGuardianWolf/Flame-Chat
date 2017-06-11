@@ -1,24 +1,31 @@
 <div class="conversations wrapper">
-    <div class="listview-outlook list-pane bg-dark" data-role="listview">
-        <div class="list-group list-wrapper" ng-repeat="category in listView track by category.title">
-            <span class="list-group-toggle fg-white bg-grayDark">{{category.title}}</span>
-            <div class="list-group-content">
-                <div class="list bg-hover-grayDark" ng-repeat="model in category.models track by model.id" ng-click="selectListModel(model)">
-                    <div class="list-content">
-                        <div class="list-icon" style="background-image:url('{{model.picture}}')">
-                        </div>
-                        <div class="list-content-text">
-                            <div class="list-title">
-                                {{model.displayName}}
+    <div class="list-bar">
+        <div class="search dark-inputs">
+            <div class="input-control text full-size">
+                <input type="text" name="search" ng-model="search" ng-model-options="{debounce: 200}" placeholder="Search"/>
+            </div>
+        </div>
+        <div class="listview-outlook list-pane bg-dark" data-role="listview">
+            <div class="list-group list-wrapper" ng-repeat="category in listView track by category.title">
+                <span class="list-group-toggle fg-white bg-grayDark">{{category.title}}</span>
+                <div class="list-group-content">
+                    <div class="list bg-hover-grayDark" ng-repeat="model in category.models track by model.id" ng-click="selectListModel(model)">
+                        <div class="list-content">
+                            <div class="list-icon" style="background-image:url('{{model.picture}}')">
                             </div>
-                            <div class="list-subtitle">
-                                {{model.username}}
+                            <div class="list-content-text">
+                                <div class="list-title">
+                                    {{model.displayName}}
+                                </div>
+                                <div class="list-subtitle">
+                                    {{model.username}}
+                                </div>
+                                <div class="list-remark">
+                                    {{model.status}}
+                                </div>
                             </div>
-                            <div class="list-remark">
-                                {{model.status}}
+                            <div class="alert" ng-show="model.alert">
                             </div>
-                        </div>
-                        <div class="alert" ng-show="model.alert">
                         </div>
                     </div>
                 </div>
@@ -47,21 +54,31 @@
                     </div>
                 </div>
             </div>
-            <div class="content-body">
+            <div class="content-body" scroll-glue-bottom>
                 <div class="content-list-wrapper">
                     <ol class="content-list">
                         <li class="item" ng-repeat="model in contentModel track by model.ngId">
-                            <div class="bubble">
-                                <span class="message" ng-show="model.type === 'message'">
+                            <div class="bubble" ng-class="bubbleClass(model)">
+                                <span class="message" ng-if="model.type === 'message'">
                                     {{model.message}}
                                 </span>
-                                <span class="file" ng-show="model.type === 'file'">
+                                <span class="file" ng-if="model.type === 'file'">
+                                    <div data-role="video" ng-if="model.content_type.split('/')[0] === 'video'">
+                                        <video>
+                                            <source src="{{model.href}}" type="{{model.content_type}}"/>
+                                        </video>
+                                    </div>
+                                    <div data-role="audio" ng-if="model.content_type.split('/')[0] === 'audio'">
+                                        <audio>
+                                            <source src="{{model.href}}" type='{{model.content_type}}' />
+                                        </audio>
+                                    </div>
                                     <a href="{{model.href}}" target="_blank">{{model.filename}}</a>
                                 </span>
                             </div>
                             <div class="time">
                                 <span>
-                                    {{model.stamp}}
+                                    {{model.timestamp}}
                                 </span>
                             </div>
                         </li>
@@ -76,7 +93,7 @@
                      <div class="button-group">
                         <button type="button" ngf-drop ngf-select ng-model="entry.file"
                             ngf-drag-over-class="'info block-shadow-info text-shadow'" ngf-multiple="false" ngf-allow-dir="false"
-                            accept="*/*" ngf-pattern="'*/*'" class="button cycle-button file">
+                             class="button cycle-button file">
                             <span class="mif-folder"></span>
                         </button>
                         <div ngf-no-file-drop>

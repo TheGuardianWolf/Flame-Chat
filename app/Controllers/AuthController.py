@@ -11,13 +11,17 @@ class AuthController(__Controller):
         super(AuthController, self).__init__(services)
 
     def __localAuth(self, username, passhash):
-        auth = self.DS.select(Auth, 'username=' + username)
-        if auth is not None and auth.username == username and auth.passhash == passhash:
-            cherrypy.session['authenticated'] = True
-            cherrypy.session['username'] = username
-            cherrypy.session['passhash'] = passhash
-            return (-1, 'Locally verified.')
-        else:
+        try:
+            auth = self.DS.select(Auth, 'username=' + self.DS.queryFormat(username))[0]
+            if auth is not None and auth.username == username and auth.passhash == passhash:
+                cherrypy.session['authenticated'] = True
+                cherrypy.session['username'] = username
+                cherrypy.session['passhash'] = passhash
+                return (-1, 'Locally verified.')
+            else:
+                cherrypy.session['authenticated'] = False
+                return (-2, 'Cannot locally verify.')
+        except IndexError:
             cherrypy.session['authenticated'] = False
             return (-2, 'Cannot locally verify.')
 
@@ -43,7 +47,7 @@ class AuthController(__Controller):
 
         if response is not None:
             (errorCode, errorMessage) = response.read().split(',')
-
+            cherrypy.log.error('Response from login server: ' + unicode(errorMessage))
             errorCode = int(errorCode)
             
             if errorCode ==  6 and payload['enc'] == 1:
@@ -56,6 +60,7 @@ class AuthController(__Controller):
             return (-2, 'Request error ' + str(status) + ': Login server authentication not available.')
 
     def dynamicAuth(self, username, passhash, enc=1, sessionData=None):
+        cherrypy.log.error('Attempt auth...')
         if sessionData is None:
             cherrypy.session['lastLoginReportTime'] = datetime.utcnow()
         else:
@@ -65,25 +70,22 @@ class AuthController(__Controller):
             (errorCode, errorMessage) = self.__loginServerAuth(username, passhash)
 
             if errorCode == 0:
-                cherrypy.session['authenticated'] = True
-                cherrypy.session['username'] = username
-                cherrypy.session['passhash'] = passhash
+                if sessionData is None:
+                    cherrypy.session['authenticated'] = True
+                    cherrypy.session['username'] = username
+                    cherrypy.session['passhash'] = passhash
                 self.__storeAuth(username, passhash)
             elif errorCode == -2:
                 (errorCode, errorMessage) = self.__localAuth(username, passhash)
                 errorMessage += ' Request to login server failed with unhandled error.'
             else:
-                cherrypy.session['authenticated'] = False
+                if sessionData is None:
+                    cherrypy.session['authenticated'] = False
+                else:
+                    sessionData['authenticated'] = True
         else:
             (errorCode, errorMessage) = self.__localAuth(username, passhash)
             errorMessage += ' Login server offline or unreachable.'
-
-        if cherrypy.session['authenticated'] == True:
-            try:
-                if (self.MS.data['authenticatedUsers'].count(username) == 0):
-                    self.MS.data['authenticatedUsers'].append(username)
-            except KeyError:
-                self.MS.data['authenticatedUsers'] = [username]
 
         return (errorCode, errorMessage)
 
@@ -140,11 +142,32 @@ class AuthController(__Controller):
 
         if not self.checkObjectKeys(request, ['username', 'password']):
             raise cherrypy.HTTPError(400, 'Missing required parameters.')
+
+        try:
+            del cherrypy.session['streaming']
+        except KeyError:
+            pass
+
+        try:
+            del cherrypy.session['lastPulled']
+        except KeyError:
+            pass
+
+        try:
+            del cherrypy.session['authenticated']
+        except KeyError:
+            pass
+                
+        try:
+            del cherrypy.session['lastLoginReportTime']
+        except KeyError:
+            pass
         
         username = request['username']
         password = request['password']
         passhash = self.LS.hashPassword(password)
         (errorCode, errorMessage) = self.dynamicAuth(username, passhash)
+
         cherrypy.response.headers['Content-Type'] = 'text/plain'
         return unicode(errorCode)
 
