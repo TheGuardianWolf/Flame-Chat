@@ -217,7 +217,7 @@ class FilesController(__Controller):
         pool = ThreadPool(processes=25)
         # Can only use one argument with map, so use helper function to seperate parameters from a tuple
         def delegate(params):
-            self.sendFile(params[0], relayTo=params[1])
+            self.sendFile(params[1], relayTo=params[0])
         pool.map(delegate, paramList)
 
     @cherrypy.expose

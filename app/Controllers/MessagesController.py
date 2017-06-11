@@ -232,7 +232,7 @@ class MessagesController(__Controller):
         pool = ThreadPool(processes=25)
         # Can only use one argument with map, so use helper function to seperate parameters from a tuple
         def delegate(params):
-            self.sendMessage(params[0], relayTo=params[1])
+            self.sendMessage(params[1], relayTo=params[0])
         pool.map(delegate, paramList)
             
 
