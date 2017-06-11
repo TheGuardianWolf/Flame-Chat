@@ -2,7 +2,7 @@
     <div class="auth-background bg-darker">
         <div class="auth-strip bg-grayLighter">
             <div class="logo">
-                <h1 class="text-icon">🔥</h1>
+                <div class="icon"></div>
                 <h1 class="">Flame Chat</h1>
             </div>
 

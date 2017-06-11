@@ -144,8 +144,13 @@ body {
 .auth .auth-strip .logo {
   margin-bottom: 20px;
 }
-.auth .auth-strip .logo .text-icon {
-  font-size: 5rem;
+.auth .auth-strip .logo .icon {
+  height: 88px;
+  width: 88px;
+  margin: 0px auto;
+  background-position: center;
+  background-size: cover;
+  background-image: url('../favicon.png');
 }
 .auth .auth-strip .login {
   display: flex;
