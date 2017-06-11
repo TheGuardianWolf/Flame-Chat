@@ -6,6 +6,9 @@ from httplib import HTTPException
 from json import dumps
 
 class RequestService(object):
+    """
+    Request sender, sends requests to clients and handles exceptions sanely.
+    """
     def __init__(self):
         setdefaulttimeout(10)
 

@@ -6,6 +6,9 @@ import hashlib
 from binascii import hexlify, unhexlify
 
 class SecureService(object):
+    """
+    Manages encryption and hashing.
+    """
     def __init__(self, privateKeyPath, publicKeyPath):
         self.__loadPeerKeys(privateKeyPath, publicKeyPath)
 

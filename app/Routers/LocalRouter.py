@@ -9,6 +9,9 @@ from app.Controllers.StatusController import StatusController
 from app.Controllers.StreamController import StreamController
 
 class LocalRouter(object):
+    """
+    Routes requests to local API.
+    """
     def __init__(self, services):
         self.auth = AuthController(services)
         self.users = UsersController(services)

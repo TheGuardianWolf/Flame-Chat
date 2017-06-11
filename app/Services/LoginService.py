@@ -6,6 +6,9 @@ import hashlib
 import socket
 
 class LoginService(object):
+    """
+    Manages login server status and retrieving locations for authentication.
+    """
     def __init__(self):
         self.online = True
         self.ip = None

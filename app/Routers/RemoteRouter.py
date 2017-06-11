@@ -4,6 +4,9 @@ from app.Controllers.PublicController import PublicController
 
 # Simple hack to have a placeholder router for public api routes
 def RemoteRouter(services):
+    """
+    Routes remote requests to the PublicController
+    """
     return PublicController(services)
 
 #class RemoteRouter(object):

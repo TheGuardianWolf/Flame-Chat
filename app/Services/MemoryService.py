@@ -1,5 +1,7 @@
 class MemoryService(object):
-    """description of class"""
+    """
+    Holds shared memory across several users.
+    """
 
     def __init__(self):
         self.data = {}

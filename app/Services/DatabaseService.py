@@ -12,6 +12,9 @@ from app.Models.FileModel import File
 from app.Models.FileMetaModel import FileMeta
 
 class DatabaseService(object):
+    """
+    Database driver for the chat application, manages all things related to the DB.
+    """
     def __init__(self, dbPath):
         self.__busy = False
         self.dbPath = dbPath
@@ -19,6 +22,9 @@ class DatabaseService(object):
         
 
     def __checkDB(self):
+        """
+        Create database and tables if it does not exist.
+        """
         if not os.path.isfile(self.dbPath):
             models = [User, UserMeta, Auth, Message, MessageMeta, Profile, File, FileMeta]
             queries =  []
@@ -40,6 +46,9 @@ class DatabaseService(object):
             print 'Using database found at ' + self.dbPath
 
     def queryFormat(self, item):
+        """
+        Format a python variable as a SQL variable
+        """
         if item is None:
             return 'NULL'
         elif isinstance(item, basestring):
@@ -48,9 +57,15 @@ class DatabaseService(object):
             return unicode(item)
 
     def bracketJoin(self, joint, list):
+        """
+        Join with brackets at start and end.
+        """
         return '(' + joint.join(list) + ')'
 
     def queryMany(self, queries, fetch=False):
+        """
+        Send a batch of queries.
+        """
         while (self.__busy):
             sleep(0.5)
         self.__busy = True;
@@ -77,6 +92,9 @@ class DatabaseService(object):
         return returnVals
 
     def query(self, query, fetch=False):
+        """
+        Do one SQL query.
+        """
         try:
             return self.queryMany([query], fetch)[0]
         except IndexError:
