@@ -78,7 +78,7 @@ Inter-App Encryption and Hashing - hone076 (or hone075??? Which one is Hamish), 
 
 P2P Networking - User cache only, block login server and it will default to cache
 
-Offline Messaging - smoh944, abha808
+Offline Messaging - smoh944, abha808, ssit662, asut324
 
 Fails Graciously - dwye244, hdin898 + potentially others, been hard to find 'substandard'
 
