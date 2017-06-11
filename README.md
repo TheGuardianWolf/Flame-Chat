@@ -74,7 +74,7 @@ Blacklisting - Put someone in my blacklist
 
 Rate Limiting - Just ping me 20 times in 5 seconds
 
-Inter-App Encryption - hone076 (or hone075??? Which one is Hamish), ssit662
+Inter-App Encryption and Hashing - hone076 (or hone075??? Which one is Hamish), ssit662
 
 P2P Networking - User cache only, block login server and it will default to cache
 
