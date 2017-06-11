@@ -40,17 +40,47 @@ python2 ./packages/pytest/pytest.py test
 
 If you're on Windows, run the .bat file with ```---run-tests```.
 
-
 ## Blacklisting ##
 
 Blacklist is located in ```app/Config/blacklist.json```, update according to the following model:
 
 ```json
+[ 
+    { 
+        "entry": "asut324", 
+        "type": "username" 
+    }, 
+    { 
+        "entry": "9.9.9.9", 
+        "type": "ip" 
+    } 
+]
 ```
 
 ## Rate Limiting ##
 
-Public apis are IP restricted to 10 requests per 5 seconds.
+Public apis are IP restricted to 20 requests per 5 seconds.
+
+
+## Support List ##
+
+Everything C Grade - asut324, wcha609
+
+Embedded media - asut324, smoh944, abha808
+
+User status - wcha609, asut324
+
+Blacklisting - Put someone in my blacklist
+
+Rate Limiting - Just ping me 20 times in 5 seconds
+
+Inter-App Encryption - hone076 (or hone075??? Which one is Hamish), ssit662
+
+P2P Networking - User cache only, block login server and it will default to cache
+
+Offline Messaging - smoh944, abha808
+
+Fails Graciously - dwye244, hdin898 + potentially others, been hard to find 'substandard'
 
 ## Contacts ##
 
