@@ -48,5 +48,7 @@ class RequestService(object):
             return (e.code, None)
         except URLError, e:
             return (e.reason.errno, None)
+        except TimeoutError as e:
+            return (504, None)
         except HTTPException, e:
             return (e.reason.errno, None)

@@ -33,28 +33,28 @@ class StreamController(__Controller):
 
         if self.checkTiming(sessionData, 'lastLoginReportTime', 40):
             self.__auth.dynamicAuth(sessionData['username'], sessionData['passhash'], sessionData=sessionData)
-
-        elif self.checkTiming(memoryData, 'lastUserListRefresh', 10):
+        
+        if self.checkTiming(memoryData, 'lastUserListRefresh', 10):
             self.__users.dynamicRefreshActiveUsers(sessionData['username'], sessionData['passhash'])
-
-        elif self.checkTiming(memoryData, 'lastUserInfoQuery', 10):
+        
+        if self.checkTiming(memoryData, 'lastUserInfoQuery', 10):
             self.__users.userInfoQuery(sessionData['username'])
 
-        elif 'pulled' not in sessionData:
+        if 'pulled' not in sessionData:
             self.__users.requestRetrieval(sessionData['username'])
             sessionData['pulled'] = True
 
-        elif self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
+        if self.checkTiming(memoryData, 'lastUserStatusQuery', 10):
             self.__status.userStatusQuery()
 
-        elif self.checkTiming(memoryData, 'lastUserProfileQuery', 60):
+        if self.checkTiming(memoryData, 'lastUserProfileQuery', 60):
             self.__profiles.userProfileQuery(sessionData['username'])
-        
-        elif self.checkTiming(memoryData, 'lastRelayMessageSend', 300):
-            self.__messages.relayMessageSend()
 
-        elif self.checkTiming(memoryData, 'lastRelayFileSend', 300):
-            self.__files.relayFileSend()
+        if self.checkTiming(memoryData, 'lastRelayMessageSend', 300):
+            self.__messages.relayMessages()
+
+        if self.checkTiming(memoryData, 'lastRelayFileSend', 300):
+            self.__files.relayFiles()
 
 
     @cherrypy.expose
@@ -130,11 +130,8 @@ class StreamController(__Controller):
                 cherrypy.session.release_lock()
                 sleep(1)
                 cherrypy.session.acquire_lock()
-
-        try:    
-            return content()
-        except AttributeError:
-            return
+  
+        return content()
 
     @cherrypy.expose
     def disable(self):

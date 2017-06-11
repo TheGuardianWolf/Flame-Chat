@@ -1,5 +1,5 @@
 import os
-from sqlite3 import IntegrityError, connect
+from sqlite3 import IntegrityError, connect, OperationalError
 from app import Globals
 from app.Models.AuthModel import Auth
 from app.Models.MessageModel import Message
@@ -40,7 +40,7 @@ class DatabaseService(object):
         if item is None:
             return 'NULL'
         elif isinstance(item, basestring):
-            return '\'' + item + '\''
+            return '\'' + item.replace('\'', '\'\'') + '\''
         else:
             return unicode(item)
 
@@ -57,6 +57,8 @@ class DatabaseService(object):
                 db.execute(query)
             except IntegrityError:
                 raise IntegrityError('datatype mismatch in query: ' + query)
+            except OperationalError:
+                raise OperationalError('Error in: ' + query)
 
             if fetch:
                 returnVals.append(db.fetchall())

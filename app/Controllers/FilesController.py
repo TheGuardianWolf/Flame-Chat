@@ -172,6 +172,11 @@ class FilesController(__Controller):
 
                 payload = file.serialize()
                 del payload['id']
+
+                for key, value in payload.items():
+                    if value is None:
+                        del payload[key]
+
                 (status, response) = self.RS.post('http://' + str(destination.ip) + ':' + str(destination.port), '/receiveFile', payload)
             # Mark file action as store if direct send, else as send if relayed
             if relayTo is None:
@@ -278,7 +283,7 @@ class FilesController(__Controller):
 
                     # Check hashes of inbound
                     if q[i].hashing is not None and int(q[i].hashing) > 0:
-                        if not self.SS.hash(q[i].file, q[i].hashing, sender=q[i].sender) == q[i].hash:
+                        if not self.SS.hash(q[i].file, q[i].hashing) == q[i].hash:
                             raise ValueError('Hashes do not match')
 
                     # Check for inbound duplicates

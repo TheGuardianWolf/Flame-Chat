@@ -59,7 +59,7 @@ class PublicController(__Controller):
 
     @cherrypy.tools.json_in()
     @cherrypy.expose
-    def recieveMessage(self):
+    def receiveMessage(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
             return '6'
 
@@ -195,7 +195,7 @@ class PublicController(__Controller):
     
     @cherrypy.tools.json_in()
     @cherrypy.expose
-    def recieveFile(self):
+    def receiveFile(self):
         if not self.__userFilter(cherrypy.request.remote.ip):
             return '6'
 
@@ -211,9 +211,9 @@ class PublicController(__Controller):
         fId = self.DS.insert(f)
 
         fMetaTime = FileMeta(None, fId, 'recievedTime', recievedTime)
-        fMetaStatus = FileMeta(None, fId, 'relayAction', 'unsent')
+        fMetaStatus = FileMeta(None, fId, 'relayAction', 'send')
 
-        self.DS.insertMany(fMetaTime + fMetaStatus)
+        self.DS.insertMany([fMetaTime, fMetaStatus])
 
         return '0'
 

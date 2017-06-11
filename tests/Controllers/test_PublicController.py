@@ -39,19 +39,19 @@ class TestPublicController(object):
         assert status == 200
         assert response.read() == '0'
 
-    def test_recieveMessage(self, tmpdir):
+    def test_receiveMessage(self, tmpdir):
         self.__setup()
         testMessage = Message(
                 None,
                 'test',
-                'testReciever',
+                'testReceiver',
                 'This is a test',
                 int(getTime())
         )
-        (status, response) = self.RS.post('http://localhost' + ':' + str(Globals.publicPort), '/recieveMessage', testMessage.serialize())
+        (status, response) = self.RS.post('http://localhost' + ':' + str(Globals.publicPort), '/receiveMessage', testMessage.serialize())
         assert status == 200
         assert response.read() == '0'
-        testMessagesCondition = 'sender=\'test\' AND destination=\'testReciever\''
+        testMessagesCondition = 'sender=\'test\' AND destination=\'testReceiver\''
         message = self.DS.select(Message, testMessagesCondition)[0]
         assert message.message == 'This is a test'
         metaRecieved = self.DS.select(MessageMeta, 'messageId=' + self.DS.queryFormat(message.id) + ' AND key=\'recievedTime\'')[0]
@@ -121,7 +121,7 @@ class TestPublicController(object):
         self.DS.delete(User, 'id=' + self.DS.queryFormat(userId))
         self.DS.delete(Profile, 'id=' + self.DS.queryFormat(profileId))
 
-    def recieveFile(self, tmpdir):
+    def receiveFile(self, tmpdir):
         self.__setup()
         testFile = File(
                 None,
@@ -132,10 +132,10 @@ class TestPublicController(object):
                 'text/plain',
                 int(getTime())
         )
-        (status, response) = self.RS.post('http://localhost' + ':' + str(Globals.publicPort), '/recieveFile', testFile.serialize())
+        (status, response) = self.RS.post('http://localhost' + ':' + str(Globals.publicPort), '/receiveFile', testFile.serialize())
         assert status == 200
         assert response.read() == '0'
-        testFileCondition = 'sender=\'test\' AND destination=\'testReciever\''
+        testFileCondition = 'sender=\'test\' AND destination=\'testReceiver\''
         file = self.DS.select(Message, testFileCondition)[0]
         assert b64decode(file.file) == 'abcd'
         metaRecieved = self.DS.select(FileMeta, 'fileId=' + self.DS.queryFormat(file.id) + ' AND key=\'recievedTime\'')[0]

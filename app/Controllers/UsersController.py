@@ -103,12 +103,15 @@ class UsersController(__Controller):
         potentiallyReachable = []
 
         if self.LS.online:
-            queryList = self.MS.data['activeUsers']
+            try:
+                queryList = self.MS.data['activeUsers']
+            except KeyError:
+                queryList = []
         else:
             queryList = self.DS.select(User)
 
         # Check reachablity via location filter
-        for user in self.MS.data['activeUsers']:
+        for user in queryList:
             # Users at this server should marked 'reachable'
             if user.ip == self.LS.ip:
                 reachableUsers.append(user)
@@ -175,7 +178,7 @@ class UsersController(__Controller):
                     # Again, people not following specifications and including commas where it says to put space...
                     for standard in standards.itervalues():
                         for i in range(0, len(standard)):
-                            standard[i].strip(',')
+                            standard[i] = standard[i].strip(',')
 
                     standards['encryption'] = sorted(list(set(standards['encryption']) & set(Globals.standards['encryption'])))
                     standards['hashing'] = sorted(list(set(standards['hashing']) & set(Globals.standards['hashing'])))

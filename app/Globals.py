@@ -15,7 +15,7 @@ publicPort = 10101
 # Values for ip location
 universityDesktop = '10.103.0.0'
 universityWifi = '172.23.0.0'
-universityExternalIP = '202.36.244.14'
+universityExternalIP = '202.36.244.0'
 
 # Values for encryption
 privateKeyPath = os.path.join(appRoot, 'data', 'key')

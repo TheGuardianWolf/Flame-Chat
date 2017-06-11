@@ -36,7 +36,7 @@ class ProfilesController(__Controller):
     def userProfileQuery(self, username):
         self.MS.data['lastUserProfileQuery'] = datetime.utcnow()
         try:
-            profileQueryList = self.MS.data['activeUsers']
+            profileQueryList = self.MS.data['reachableUsers']
         except KeyError:
             profileQueryList = []
 
@@ -50,7 +50,9 @@ class ProfilesController(__Controller):
                     'profile_username': user.username,
                     'sender': username
                 }
+
                 (status, response) = self.RS.post('http://' + str(user.ip) + ':' + str(user.port), '/getProfile', payload, timeout=5)
+
                 if status == 200:
                     return (user, loads(response.read()))
                 else:

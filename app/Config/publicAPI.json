@@ -1,11 +1,11 @@
 [
     "/listAPI",
     "/ping [sender]",
-    "/recieveMessage [sender] [destination] [message] [stamp] [markdown(opt)] [encryption(opt)] [hashing(opt)] [hash(opt)] [decryptionKey(opt)]",
+    "/receiveMessage [sender] [destination] [message] [stamp] [markdown(opt)] [encryption(opt)] [hashing(opt)] [hash(opt)] [decryptionKey(opt)]",
     "/getPublicKey [sender] [profile_username]",
     "/handshake [message] [sender] [destination] [encryption] [decryptionKey(opt)]",
     "/getProfile [profile_username] [sender]",
-    "/recieveFile [sender] [destination] [file] [filename] [content_type] [stamp] [encryption(opt)] [hashing(opt)] [hash(opt)] [decryptionKey(opt)]",
+    "/receiveFile [sender] [destination] [file] [filename] [content_type] [stamp] [encryption(opt)] [hashing(opt)] [hash(opt)] [decryptionKey(opt)]",
     "/retrieveMessages [requestor]",
     "/getStatus [profile_username]"
 ]

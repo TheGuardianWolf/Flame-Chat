@@ -1,3 +1,4 @@
+import cherrypy
 from app import Globals
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import HTTPException
@@ -39,8 +40,10 @@ class LoginService(object):
 
     def getLocation(self):
         extIP = self.__getExternalIP()
+        extIPArr = extIP.split('.')
+        uniIPArr = Globals.universityExternalIP.split('.')
 
-        if extIP == Globals.universityExternalIP:
+        if (extIPArr[0], extIPArr[1], extIPArr[2]) == (uniIPArr[0], uniIPArr[1], uniIPArr[2]):
             currIntIP = self.__getInternalIP()
             currIntIPArr = currIntIP.split('.')
 

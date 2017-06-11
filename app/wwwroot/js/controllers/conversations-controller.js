@@ -145,7 +145,7 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
     };
 
     var sendMessage = function() {
-        var destination = $scope.selectedModel.model.username;
+        var destination = $scope.selectedModel.username;
         var request = $http({
             method: 'POST',
             url: apiRoute(['messages', 'post']),

@@ -228,6 +228,7 @@ label.show {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  overflow-y: auto;
 }
 .conversations .content-pane .content-wrapper .content-body .content-list {
   list-style: none;
@@ -252,6 +253,7 @@ label.show {
   border-top: 1px solid #0067cb;
   display: flex;
   flex-direction: row;
+  height: 76px;
 }
 .conversations .content-pane .content-wrapper .content-footer .new-message {
   width: 100%;
