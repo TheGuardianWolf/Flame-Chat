@@ -147,10 +147,10 @@ flame.controller('mainController', [
 
         var startCycles = function() {
             $scope.streamConnect();
-            var userCycle = fetch('users', 'get', 10000, []);
+            var userCycle = fetch('users', 'get', 5000, []);
             var profileCycle = fetch('profiles', 'get', 30000, []);
-            var statusCycle = fetch('status', 'get', 10000, []);
-            var conversationCycle = fetchConversations(10000);
+            var statusCycle = fetch('status', 'get', 5000, []);
+            var conversationCycle = fetchConversations(2000);
         };
 
         $scope.startCycles = startCycles;
