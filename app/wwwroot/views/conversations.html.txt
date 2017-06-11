@@ -3,7 +3,7 @@
         <div class="list-group list-wrapper" ng-repeat="category in listView track by category.title">
             <span class="list-group-toggle fg-white bg-grayDark">{{category.title}}</span>
             <div class="list-group-content">
-                <div class="list bg-hover-grayDark" ng-repeat="model in category.models track by model.id" ng-click="selectModel(model)">
+                <div class="list bg-hover-grayDark" ng-repeat="model in category.models track by model.id" ng-click="selectListModel(model)">
                     <div class="list-content">
                         <div class="list-icon" style="background-image:url('{{model.picture}}')">
                         </div>
@@ -28,20 +28,20 @@
     <div class="content-pane">
         <div class="content-wrapper" ng-show="showContent()">
             <div class="content-header">
-                <div class="icon" style="background-image:url('{{selectedModel.model.picture}}')">
+                <div class="icon" style="background-image:url('{{selectedModel.picture}}')">
                 </div>
                 <div class="text">
                     <div class="title">
-                        <h3>{{selectedModel.model.displayName}} <small>{{selectedModel.model.username}}</small></h3>
+                        <h3>{{selectedModel.displayName}} <small>{{selectedModel.username}}</small></h3>
                     </div>
                     <div class="description">
-                        {{selectedModel.model.description}}
+                        {{selectedModel.description}}
                         <div>
                             <div class="position">
-                                {{selectedModel.model.position}}
+                                {{selectedModel.position}}
                             </div>
                             <div class="status">
-                                Currently {{selectedModel.model.status}} at {{selectedModel.model.location}}
+                                Currently {{selectedModel.status}} at {{selectedModel.location}}
                             </div>
                         </div>
                     </div>
@@ -49,8 +49,8 @@
             </div>
             <div class="content-body">
                 <div class="content-list-wrapper">
-                    <ol class="content-list" ng-hide="selectedModel.content.length === 0">
-                        <li class="item" ng-repeat="model in selectedModel.content track by model.ngId">
+                    <ol class="content-list">
+                        <li class="item" ng-repeat="model in contentModel track by model.ngId">
                             <div class="bubble">
                                 <span class="message" ng-show="model.type === 'message'">
                                     {{model.message}}

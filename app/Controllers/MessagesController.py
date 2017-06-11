@@ -14,7 +14,7 @@ from json import loads, dumps
 class MessagesController(__Controller):
     def __init__(self, services):
         super(MessagesController, self).__init__(services)
-        self.noEncrypt = ['sender', 'destination', 'encryption']
+        self.noEncrypt = ['id', 'sender', 'destination', 'encryption']
 
     def decodeMessage(self, msg, encoding):
         if str(encoding) == '0':
@@ -120,16 +120,72 @@ class MessagesController(__Controller):
 
     def sendMessage(self, message, relayTo=None):
         destination = relayTo
+        reachableUsers = self.MS.data['reachableUsers']
 
         if relayTo is None:
             # Find user entry
-            for user in reachableUsers:
-                if message.destination == user.username:
-                    destination = user
+            try:
+                for user in reachableUsers:
+                    if message.destination == user.username:
+                        destination = user
+            except KeyError:
+                pass
 
         if destination is not None:
+            # Send the message if destination is not local
             if not destination.ip == self.LS.ip:
-                # Send the message if destination is not local
+                # Check destination standards support list
+                conditions = [
+                    'key=\'standards\'',
+                    'AND',
+                    'userId',
+                    'IN',
+                    '(SELECT id FROM ' + User.tableName + ' WHERE username=' + self.DS.queryFormat(destination.username) + ')'
+                ]
+                q = self.DS.select(UserMeta, ' '.join(conditions))
+
+                try:
+                    if len(q) > 0:
+                        standards = loads(q[0].value)
+
+                        if 'encryption' not in standards:
+                            standards['encryption'] = ['0']
+
+                        if 'hashing' not in standards:
+                            standards['hashing'] = ['0']
+                    else:
+                        raise AssertionError('Support list not found')
+                except (ValueError, AssertionError):
+                    standards = {
+                        'encryption': ['0'],
+                        'hashing': ['0']
+                    }
+
+                standard = {
+                    'encryption': standards['encryption'][-1],
+                    'hashing': standards['hashing'][-1]
+                }
+
+                # Hash message
+                hash = self.SS.hash(message.message, standard['hashing'])
+
+                # Update message model
+                message.hashing = standard['hashing']
+                message.hash = hash
+
+                # Encrypt
+                if int(standard['encryption']) > 0:
+                    try:
+                        for entryName, entryType in message.tableSchema:
+                            if entryName not in self.noEncrypt:
+                                value = getattr(message, entryName)
+                                if value is not None:
+                                    encValue = self.SS.encrypt(value, standard['encryption'], key=destination.publicKey)
+                                    setattr(message, entryName, encValue)
+                        message.encryption = standard['encryption']
+                    except IndexError:
+                        pass
+
                 payload = message.serialize()
                 del payload['id']
                 (status, response) = self.RS.post('http://' + str(destination.ip) + ':' + str(destination.port), '/receiveMessage', payload)
@@ -184,6 +240,12 @@ class MessagesController(__Controller):
         if not self.isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 
+        if since is not None:
+            try:
+                timeSince = float(since)
+            except ValueError:
+                raise cherrypy.HTTPError(400, 'Malformed time.')
+
         try:
             streamEnabled = cherrypy.session['streamEnabled']
         except KeyError:
@@ -196,67 +258,68 @@ class MessagesController(__Controller):
             if self.checkTiming(self.MS.data, 'lastRelayMessageSend', 300):
                 self.relayMessages()
 
-        if since is None:
-            conditions = [
-                'sender=' + self.DS.queryFormat(username),
-                'OR',
-                'destination=' + self.DS.queryFormat(username)
-            ]
-            q = self.DS.select(Message, ' '.join(conditions))
-        else:
-            try:
-                timeSince = timegm(gmtime(float(since)))
-            except ValueError:
-                raise cherrypy.HTTPError(400, 'Malformed time.')
-            conditions = [
-                'sender=' + self.DS.queryFormat(username),
-                'OR',
-                'destination=' + self.DS.queryFormat(username),
-                'AND',
-                'id',
-                'IN',
-                '(SELECT messageId FROM ' + MessageMeta.tableName + ' WHERE key=\'recievedTime\' AND CAST(value as REAL) > ' + '{0:.3f}'.format(timeSince) + ')'
-            ]
-            q = self.DS.select(Message, ' '.join(conditions))
-
+        conditions = [
+            'sender=' + self.DS.queryFormat(username),
+            'OR',
+            'destination=' + self.DS.queryFormat(username)
+        ]
+        q = self.DS.select(Message, ' '.join(conditions))
+            
         returnObj = []
 
         removeQueue = []
-        markReadQueue = []
+        markStoreQueue = []
 
         for i in range(0, len(q)):
             inbound = q[i].destination == username
             try:
-                # Decrypt if encrypted
-                if q[i].encryption is not None and int(q[i].encryption) > 0:
-                    for entryName, entryType in q[i].tableSchema:
-                        if entryName not in self.noEncrypt:
-                            self.SS.decrypt(getattr(q[i], entryName), q[i].encryption)
-
                 # Run checks on inbound messages
                 if inbound:
+                    # Decrypt if encrypted
+                    if q[i].encryption is not None and int(q[i].encryption) > 0:
+                        for entryName, entryType in q[i].tableSchema:
+                            if entryName not in self.noEncrypt:
+                                try:
+                                    value = getattr(q[i], entryName)
+                                    if value is not None:
+                                        rawValue = self.SS.decrypt(getattr(q[i], entryName), q[i].encryption)
+                                        setattr(q[i], entryName, rawValue)
+                                except TypeError:
+                                    raise ValueError('Cannot decrypt')
+
+                    # Check if message is recent
+                    if since is not None:
+                        if float(q[i].stamp) <= float(since):
+                            continue
+
                     # Check hashes of inbound
                     if q[i].hashing is not None and int(q[i].hashing) > 0:
                         if not self.SS.hash(q[i].message, q[i].hashing, sender=q[i].sender) == q[i].hash:
                             raise ValueError('Hashes do not match')
 
                     # Check for inbound duplicates
-                    for msg in markReadQueue:
+                    for msg in markStoreQueue:
                         if self.duplicateCheck(msg, q[i]):
                             raise ValueError('Duplicate message')
 
-                    # Mark sent if inbound and unmarked
+                    # Mark store if inbound and marked otherwise
                     if (q[i].destination == username):
-                        markReadQueue.append(q[i])
+                        markStoreQueue.append(q[i])
+
+                else:
+                    # Check if message is recent
+                    if since is not None:
+                        if float(q[i].stamp) <= float(since):
+                            continue
 
                 # Store object to be returned
-                returnObj.append(q[i].serialize()) 
+                returnObj.append(q[i].serialize())
             except ValueError:
                 removeQueue.append(q[i])
                 continue
 
-            # Process mark-reads
-            self.upsertMessageMeta('relayAction', 'store', markReadQueue)
+            # Process mark-stores
+            self.upsertMessageMeta('relayAction', 'store', markStoreQueue)
             
             # Process removals
             self.deleteMessages(removeQueue)
@@ -280,40 +343,12 @@ class MessagesController(__Controller):
         if not self.checkObjectKeys(request, ['destination', 'message']):
             raise cherrypy.HTTPError(400, 'Missing required parameters.')
 
+        destination = request['destination']
         username = cherrypy.session['username']
         cherrypy.session.release_lock()
 
         currentTime = getTime()
         stamp = '{0:.3f}'.format(currentTime)
-
-        # Check destination standards support list
-        conditions = [
-            'key=\'standards\'',
-            'AND',
-            'userId',
-            'IN',
-            '(SELECT id FROM ' + User.tableName + ' WHERE username=' + self.DS.queryFormat(destination) + ')'
-        ]
-        q = self.DS.select(UserMeta, ' '.join(conditions))
-
-        try:
-            if len(q) > 0:
-                standards = loads(q[0].value)
-            else:
-                raise AssertionError('Support list not found')
-        except:
-            standards = {
-                'encryption': ['0'],
-                'hashing': ['0']
-            }
-
-        standard = {
-            'encryption': standards.encryption[-1],
-            'hashing': standards.hashing[-1]
-        }
-
-        # Hash message
-        hash = self.SS.hash(rawMsg, standard['hashing'])
 
         # Generate new message model
         msg = Message(
@@ -321,22 +356,8 @@ class MessagesController(__Controller):
             username,
             destination,
             request['message'],
-            stamp,
-            standard['encryption'],
-            standard['hashing'],
-            self.SS.hash(request['message']),
-            None
+            stamp
         )
-
-        # Encrypt message
-        if int(standard['encryption']) > 0:
-            try:
-                user = self.DS.select(User, 'username=' + self.DS.queryFormat(destination))[0]
-                for entryName, entryType in msg.tableSchema:
-                    if entryName not in self.noEncrypt:
-                        self.SS.encrypt(getattr(msg, entryName), standard['encryption'], key=user.publicKey)
-            except IndexError:
-                pass
 
         # Store message in db
         msgId = self.DS.insert(msg)
@@ -344,11 +365,9 @@ class MessagesController(__Controller):
         # Generate message metadata for relay
         msgMetaTime = MessageMeta(None, msgId, 'recievedTime', stamp)
         msgMetaStatus = MessageMeta(None, msgId, 'relayAction', 'broadcast')
-        self.DS.insertMany(msgMetaTime + msgMetaStatus)
+        self.DS.insertMany([msgMetaTime, msgMetaStatus])
 
         msg = Message.deserialize(request)
-
-        msgId = self.DS.insert(msg)
 
         try:
             if request['destination'] not in self.MS.data['pushRequests']:

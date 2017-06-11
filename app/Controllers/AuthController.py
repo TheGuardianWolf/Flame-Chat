@@ -97,31 +97,35 @@ class AuthController(__Controller):
         else:
             self.DS.insert(Auth(None, username, passhash))
 
-    #@cherrypy.expose
-    #def stream(self):
-    #    if (cherrypy.request.remote.ip != '127.0.0.1'):
-    #        raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
-    #    if not self.isAuthenticated():
-    #        raise cherrypy.HTTPError(403, 'User not authenticated')
+    def dynamicLogoff(self, username, passhash, enc=1):
+        if (self.LS.online):
+            payload = {
+                'username': username,
+                'password': passhash
+            }
 
-    #    cherrypy.response.stream = True
-    #    cherrypy.response.headers['Content-Type'] = 'text/event-stream'
-    #    cherrypy.response.headers['Cache-Control'] = 'no-cache'
-    #    errorCode = '-1'
-        
-    #    username = cherrypy.session['username']
-    #    passhash = cherrypy.session['passhash']
+            if enc > 0:
+                for key in payload.keys():
+                        payload[key] = self.SS.serverEncrypt(payload[key])
+                payload['enc'] = 1
 
-    #    cherrypy.session.release_lock()
+            (status, response) = self.RS.get(Globals.loginRoot, '/logoff', payload)
 
+            if response is not None:
+                (errorCode, errorMessage) = response.read().split(',')
 
-    #    def content():
-    #        while True:
-    #            (errorCode, errorMessage) = self.dynamicAuth(username, passhash)
-    #            yield str(errorCode) + errorMessage + '\n\n'
-    #            sleep(40)  
-                  
-    #    return content()
+                errorCode = int(errorCode)
+            
+                if errorCode ==  6 and payload['enc'] == 1:
+                    raise Exception((errorCode, errorMessage))
+                    (errorCode, errorMessage) = self.dynamicLogoff(username, passhash, enc=0)
+                    errorCode = int(errorCode)
+
+                return (errorCode, errorMessage)
+            else:
+                return (-2, 'Request error ' + str(status) + ': Login server authentication not available.')
+        else:
+            return (-1, 'Login server is offline.')
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -142,4 +146,18 @@ class AuthController(__Controller):
         passhash = self.LS.hashPassword(password)
         (errorCode, errorMessage) = self.dynamicAuth(username, passhash)
         cherrypy.response.headers['Content-Type'] = 'text/plain'
+        return unicode(errorCode)
+
+    @cherrypy.expose
+    def logoff(self):
+        if (cherrypy.request.remote.ip != '127.0.0.1'):
+            raise cherrypy.HTTPError(403, 'You don\'t have permission to access /local/ on this server.')
+        if not self.isAuthenticated():
+            raise cherrypy.HTTPError(403, 'User not authenticated')
+
+        (errorCode, errorMessage) = self.dynamicLogoff(cherrypy.session['username'], cherrypy.session['passhash'])
+        del cherrypy.session['pulled']
+        del cherrypy.session['lastLoginReportTime']
+        del cherrypy.session['streamEnabled']
+        
         return unicode(errorCode)

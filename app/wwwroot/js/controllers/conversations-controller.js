@@ -1,37 +1,45 @@
 flame.controller('conversationsController', ['$scope', '$http', function($scope, $http) {
     // Create view models for templating
-    $scope.showContent = function() {
-        return $scope.selectedModel !== null;
-    };
-    $scope.selectedModel = null;
-    $scope.selectModel = function(model) {
-        var convoFilter = function(obj) {
-            return obj.sender == model.username || obj.destination == model.username;
-        };
+    var updateContentModel = function() {
+        model = $scope.selectedModel;
+        if (model !== null) {
+            var convoFilter = function(obj) {
+                return obj.sender == model.username || obj.destination == model.username;
+            };
 
-        var content = $scope.data.messages
-        .filter(convoFilter)
-        .map(function(message) {
-            message.ngId = 'm' + String(message.id);
-            message.type = 'message';
-        })
-        .concat(
-            $scope.data.files
+            var content = $scope.data.messages
             .filter(convoFilter)
-            .map(function(file) {
-                file.ngId = 'f' + String(file.id);
-                file.type = 'file';
-                file.href = 'data:' + file.content_type +  ';base64,' + file.file;
+            .map(function(message) {
+                message.ngId = 'm' + String(message.id);
+                message.type = 'message';
+                return message;
             })
-        )
-        .sort(function(a, b) {
-            return a.stamp - b.stamp;
-        });
+            .concat(
+                $scope.data.files
+                .filter(convoFilter)
+                .map(function(file) {
+                    file.ngId = 'f' + String(file.id);
+                    file.type = 'file';
+                    file.href = 'data:' + file.content_type +  ';base64,' + file.file;
+                    return file;
+                })
+            )
+            .sort(function(a, b) {
+                return a.stamp - b.stamp;
+            });
 
-        $scope.selectedModel = {
-            model: model,
-            content: content
-        };
+            $scope.contentModel = content;
+            console.log(content);
+        }
+    };
+    $scope.showContent = function() {
+        return $scope.contentModel !== null;
+    };
+    $scope.contentModel = null;
+    $scope.selectedModel = null;
+    $scope.selectListModel = function(model) {
+        $scope.selectedModel = model;
+        updateContentModel();
     };
 
     var updateCategoryModels = function(branch) {
@@ -128,6 +136,8 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
     $scope.$watch('data.users', updateListView);
     $scope.$watch('data.profiles', updateListView);
     $scope.$watch('data.status', updateListView);
+    $scope.$watch('data.messages', updateContentModel);
+    $scope.$watch('data.files', updateContentModel);
 
     $scope.entry = {
         message: '',
@@ -180,6 +190,6 @@ flame.controller('conversationsController', ['$scope', '$http', function($scope,
     };
 
     $scope.insertEmote = function(event) {
-        $scope.entry.message += event.target.innerHtml;
+        $scope.entry.message += event.target.innerText;
     };
 }]);

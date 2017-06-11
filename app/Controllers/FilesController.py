@@ -14,7 +14,7 @@ from json import loads, dumps
 class FilesController(__Controller):
     def __init__(self, services):
         super(FilesController, self).__init__(services)
-        self.noEncrypt = ['sender', 'destination', 'encryption']
+        self.noEncrypt = ['id', 'sender', 'destination', 'encryption']
 
     def duplicateCheck(self, a, b):
         # Check if b is a duplicate of a
@@ -104,16 +104,72 @@ class FilesController(__Controller):
 
     def sendFile(self, file, relayTo=None):
         destination = relayTo
+        reachableUsers = self.MS.data['reachableUsers']
 
         if relayTo is None:
             # Find user entry
-            for user in reachableUsers:
-                if file.destination == user.username:
-                    destination = user
+            try:
+                for user in reachableUsers:
+                    if file.destination == user.username:
+                        destination = user
+            except KeyError:
+                pass
 
         if destination is not None:
+            # Send the file if destination is not local
             if not destination.ip == self.LS.ip:
-                # Send the file if destination is not local
+                # Check destination standards support list
+                conditions = [
+                    'key=\'standards\'',
+                    'AND',
+                    'userId',
+                    'IN',
+                    '(SELECT id FROM ' + User.tableName + ' WHERE username=' + self.DS.queryFormat(destination.username) + ')'
+                ]
+                q = self.DS.select(UserMeta, ' '.join(conditions))
+
+                try:
+                    if len(q) > 0:
+                        standards = loads(q[0].value)
+
+                        if 'encryption' not in standards:
+                            standards['encryption'] = ['0']
+
+                        if 'hashing' not in standards:
+                            standards['hashing'] = ['0']
+                    else:
+                        raise AssertionError('Support list not found')
+                except (ValueError, AssertionError):
+                    standards = {
+                        'encryption': ['0'],
+                        'hashing': ['0']
+                    }
+
+                standard = {
+                    'encryption': standards['encryption'][-1],
+                    'hashing': standards['hashing'][-1]
+                }
+
+                # Hash file
+                hash = self.SS.hash(file.message, standard['hashing'])
+
+                # Update file
+                file.hashing = standard['hashing']
+                file.hash = hash
+
+                # Encrypt
+                if int(standard['encryption']) > 0:
+                    try:
+                        for entryName, entryType in file.tableSchema:
+                            if entryName not in self.noEncrypt:
+                                value = getattr(file, entryName)
+                                if value is not None:
+                                    encValue = self.SS.encrypt(value, standard['encryption'], key=destination.publicKey)
+                                    setattr(file, entryName, encValue)
+                        file.encryption = standard['encryption']
+                    except IndexError:
+                        pass
+
                 payload = file.serialize()
                 del payload['id']
                 (status, response) = self.RS.post('http://' + str(destination.ip) + ':' + str(destination.port), '/receiveFile', payload)
@@ -167,6 +223,12 @@ class FilesController(__Controller):
         if not self.isAuthenticated():
             raise cherrypy.HTTPError(403, 'User not authenticated')
 
+        if since is not None:
+            try:
+                timeSince = float(since)
+            except ValueError:
+                raise cherrypy.HTTPError(400, 'Malformed time.')
+
         try:
             streamEnabled = cherrypy.session['streamEnabled']
         except KeyError:
@@ -179,74 +241,60 @@ class FilesController(__Controller):
             if self.checkTiming(self.MS.data, 'lastRelayFileSend', 300):
                 self.relayFiles()
         
-        if since is None:
-            #conditions = [
-            #    '(sender=' + self.DS.queryFormat(username),
-            #    'AND',
-            #    'destination=' + self.DS.queryFormat(target) + ')',
-            #    'OR',
-            #    '(sender=' + self.DS.queryFormat(target),
-            #    'AND',
-            #    'destination=' + self.DS.queryFormat(username) + ')'
-            #]
-            #q = self.DS.select(File, ' '.join(conditions))
-            q = self.DS.select(File, 'destination=' + self.DS.queryFormat(username))
-        else:
-            try:
-                timeSince = timegm(gmtime(float(since)))
-            except ValueError:
-                raise cherrypy.HTTPError(400, 'Malformed time.')
-            #conditions = [
-            #    '(sender=' + self.DS.queryFormat(username),
-            #    'AND',
-            #    'destination=' + self.DS.queryFormat(target) + ')',
-            #    'OR',
-            #    '(sender=' + self.DS.queryFormat(target),
-            #    'AND',
-            #    'destination=' + self.DS.queryFormat(username) + ')',
-            #    'AND',
-            #    'id',
-            #    'IN',
-            #    '(SELECT fileId FROM ' + FileMeta.tableName + ' WHERE key=\'recievedTime\' AND value > \'' + timeString + '\')'
-            #]
-            conditions = [
-                'destination=' + self.DS.queryFormat(username),
-                'AND',
-                'id',
-                'IN',
-                '(SELECT fileId FROM ' + FileMeta.tableName + ' WHERE key=\'recievedTime\' AND CAST(value as REAL) > ' + '{0:.3f}'.format(timeSince) + ')'
-            ]
-            q = self.DS.select(File, ' '.join(conditions))
+        conditions = [
+            'sender=' + self.DS.queryFormat(username),
+            'OR',
+            'destination=' + self.DS.queryFormat(username)
+        ]
+        q = self.DS.select(File, ' '.join(conditions))
 
         returnObj = []
 
         removeQueue = []
-        markReadQueue = []
+        markStoreQueue = []
 
         for i in range(0, len(q)):
             inbound = q[i].destination == username
             try:
-                # Decrypt if encrypted
-                if q[i].encryption is not None and int(q[i].encryption) > 0:
-                    for entryName, entryType in q[i].tableSchema:
-                        if entryName not in self.noEncrypt:
-                            self.SS.decrypt(getattr(q[i], entryName), q[i].encryption)
-
                 # Run checks on inbound files
                 if inbound:
+                    # Decrypt if encrypted
+                    if q[i].encryption is not None and int(q[i].encryption) > 0:
+                        for entryName, entryType in q[i].tableSchema:
+                            if entryName not in self.noEncrypt:
+                                try:
+                                    value = getattr(q[i], entryName)
+                                    if value is not None:
+                                        rawValue = self.SS.decrypt(getattr(q[i], entryName), q[i].encryption)
+                                        setattr(q[i], entryName, rawValue)
+                                except TypeError:
+                                    cherrypy.log.error('Cannot decrypt file from ' + unicode(q[i].sender))
+                                    raise ValueError('Cannot decrypt')
+
+                    # Check if message is recent
+                    if since is not None:
+                        if float(q[i].stamp) <= float(since):
+                            continue
+
                     # Check hashes of inbound
                     if q[i].hashing is not None and int(q[i].hashing) > 0:
                         if not self.SS.hash(q[i].file, q[i].hashing, sender=q[i].sender) == q[i].hash:
                             raise ValueError('Hashes do not match')
 
                     # Check for inbound duplicates
-                    for file in markReadQueue:
+                    for file in markStoreQueue:
                         if self.duplicateCheck(file, q[i]):
                             raise ValueError('Duplicate file')
 
                     # Mark sent if inbound and unmarked
                     if (q[i].destination == username):
-                        markReadQueue.append(q[i])
+                        markStoreQueue.append(q[i])
+
+                else:
+                    # Check if message is recent
+                    if since is not None:
+                        if float(q[i].stamp) <= float(since):
+                            continue
 
                 # Store object to be returned
                 returnObj.append(q[i].serialize()) 
@@ -255,7 +303,7 @@ class FilesController(__Controller):
                 continue
 
             # Process mark-reads
-            self.upsertFileMeta('relayAction', 'store', markReadQueue)
+            self.upsertFileMeta('relayAction', 'store', markStoreQueue)
             
             # Process removals
             self.deleteFiles(removeQueue)
@@ -279,40 +327,12 @@ class FilesController(__Controller):
         if not self.checkObjectKeys(request, ['destination', 'file', 'filename', 'content_type']):
             raise cherrypy.HTTPError(400, 'Missing required parameters.')
 
+        destination = request['destination']
         username = cherrypy.session['username']
         cherrypy.session.release_lock()
 
         currentTime = getTime()
         stamp = '{0:.3f}'.format(currentTime)
-
-        # Check destination standards support list
-        conditions = [
-            'key=\'standards\'',
-            'AND',
-            'userId',
-            'IN',
-            '(SELECT id FROM ' + User.tableName + ' WHERE username=' + self.DS.queryFormat(destination) + ')'
-        ]
-        q = self.DS.select(UserMeta, ' '.join(conditions))
-
-        try:
-            if len(q) > 0:
-                standards = loads(q[0].value)
-            else:
-                raise AssertionError('Support list not found')
-        except:
-            standards = {
-                'encryption': ['0'],
-                'hashing': ['0']
-            }
-
-        standard = {
-            'encryption': standards.encryption[-1],
-            'hashing': standards.hashing[-1]
-        }
-
-        # Hash file
-        hash = self.SS.hash(rawFile, standard['hashing'])
 
         # Generate new file model
         file = File(
@@ -322,22 +342,8 @@ class FilesController(__Controller):
             request['file'],
             request['filename'],
             request['content_type'],
-            stamp,
-            standard['encryption'],
-            standard['hashing'],
-            self.SS.hash(request['file']),
-            None
+            stamp
         )
-
-        # Encrypt file
-        if int(standard['encryption']) > 0:
-            try:
-                user = self.DS.select(User, 'username=' + self.DS.queryFormat(destination))[0]
-                for entryName, entryType in file.tableSchema:
-                    if entryName not in self.noEncrypt:
-                        self.SS.encrypt(getattr(file, entryName), standard['encryption'], key=user.publicKey)
-            except IndexError:
-                pass
 
         # Store file in db
         fileId = self.DS.insert(file)
@@ -345,11 +351,9 @@ class FilesController(__Controller):
         # Generate file metadata for relay
         fileMetaTime = FileMeta(None, fileId, 'recievedTime', stamp)
         fileMetaStatus = FileMeta(None, fileId, 'relayAction', 'broadcast')
-        self.DS.insertMany(fileMetaTime + fileMetaStatus)              
+        self.DS.insertMany([fileMetaTime, fileMetaStatus])              
 
         file = File.deserialize(request)
-
-        fileId = self.DS.insert(file)
 
         try:
             if request['destination'] not in self.MS.data['pushRequests']:

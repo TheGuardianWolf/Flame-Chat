@@ -148,7 +148,8 @@ class UsersController(__Controller):
                 for i, api in enumerate(apiList):
                     try:
                         endpoint = api.split(' ')[0]
-                        if not endpoint == 'Available':
+                        # People keep not following the specifications on /listAPI
+                        if not endpoint == 'Available' or not endpoint == 'Available APIs:':
                             apiList[i] = endpoint
                     except IndexError:
                         continue
@@ -171,6 +172,7 @@ class UsersController(__Controller):
                         'hashing': standardsList[1].split(' ')
                     }
 
+                    # Again, people not following specifications and including commas where it says to put space...
                     for standard in standards.itervalues():
                         for i in range(0, len(standard)):
                             standard[i].strip(',')

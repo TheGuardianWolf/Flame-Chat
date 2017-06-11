@@ -95,21 +95,46 @@ class StreamController(__Controller):
                 cherrypy.session['streamEnabled'] = True
                 cherrypy.session.release_lock()
                 self.upkeep(sessionData)
-                yield 'ping\n\n'
+
+                cherrypy.session.acquire_lock()
+                try:
+                    del cherrypy.session['lastLoginReportTime']
+                except KeyError:
+                    pass
+
+                try:
+                    del cherrypy.session['pulled']
+                except KeyError:
+                    pass
+
+                try:
+                    del cherrypy.session['streamEnabled']
+                except KeyError:
+                    pass
+
+                try:   
+                    cherrypy.session['streamEnabled'] = True
+                    try:
+                        cherrypy.session['pulled'] = sessionData['pulled']
+                    except KeyError:
+                        pass
+                
+                    try:
+                        cherrypy.session['lastLoginReportTime'] = sessionData['lastLoginReportTime']
+                    except KeyError:
+                        pass
+                    yield 'ping\n\n'
+                except GeneratorExit:
+                    self.__auth.dynamicLogoff(sessionData['username'], sessionData['passhash'])     
+
+                cherrypy.session.release_lock()
                 sleep(1)
                 cherrypy.session.acquire_lock()
 
-                try:
-                    cherrypy.session['lastLoginReportTime'] = sessionData['lastLoginReportTime']
-                except KeyError:
-                    pass
-
-                try:
-                    cherrypy.session['pulled'] = sessionData['pulled']
-                except KeyError:
-                    pass
-                
-        return content()
+        try:    
+            return content()
+        except AttributeError:
+            return
 
     @cherrypy.expose
     def disable(self):
