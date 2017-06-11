@@ -13,9 +13,10 @@ from app.Models.FileMetaModel import FileMeta
 
 class DatabaseService(object):
     def __init__(self, dbPath):
+        self.__busy = False
         self.dbPath = dbPath
         self.__checkDB()
-        self.__busy = False
+        
 
     def __checkDB(self):
         if not os.path.isfile(self.dbPath):
