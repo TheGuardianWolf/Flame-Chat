@@ -17,15 +17,15 @@ universityDesktop = '10.103.0.0'
 universityWifi = '172.23.0.0'
 
 # Values for encryption
-privateKeyPath = os.path.join(appRoot, 'data', 'key')
-publicKeyPath = os.path.join(appRoot, 'data', 'key.pub')
+privateKeyPath = os.path.join(appRoot, 'Data', 'key')
+publicKeyPath = os.path.join(appRoot, 'Data', 'key.pub')
 salt = 'COMPSYS302-2017'
 serverKey = '150ecd12d550d05ad83f18328e536f53'
 serverAESBlockSize = 16
 serverAESPadding = ' '
 
 # Values for data/storage
-dbPath = os.path.join(appRoot, 'data', 'entity.db')
+dbPath = os.path.join(appRoot, 'Data', 'entity.db')
 
 # Values for standards support
 standards = {
